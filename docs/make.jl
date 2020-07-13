@@ -19,7 +19,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/andersgee/WebAssemblyText.jl.git",
+    repo="github.com/Andersgee/WebAssemblyText.jl.git",
     target = "build",
     branch = "gh-pages",
 )
