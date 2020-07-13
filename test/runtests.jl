@@ -2,5 +2,7 @@ using WebAssemblyText
 using Test
 
 @testset "WebAssemblyText.jl" begin
-    # Write your tests here.
+    a=1
+    b=1
+    @test a == b
 end
