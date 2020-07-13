@@ -6,9 +6,9 @@ Convert contents of a julia source code file to WebAssembly text.
 # Examples
 ```julia
 julia> using WebAssemblyText
-julia> wat = translatefile("example.jl")
+julia> wat = translatefile(\"example.jl\")
 julia> println(wat)
-````
+```
 """
 function jl2wat(path::AbstractString; debuginfo::Bool=false)
     isfile(path) || return error("No such file: $path")
@@ -63,9 +63,9 @@ function jlstring2wat(str::AbstractString; debuginfo::Bool=false)
             processed[func] = true
         end
     end
-
+    
     WATs = joinn([WATs; getbuiltins(SSAs)...])
-
+    
     debuginfo && printssa.(SSAs)
     imports = """(memory (import "imports" "memory") 1)"""
     return "(module $modulename\n$imports\n\n$WATs\n)"
@@ -89,7 +89,7 @@ function process(func, funcs, argtypes; debuginfo::Bool=false)
     ssa = structure(cinfo.code)
     ssa = [restructure(i, ssa, ssa[i]) for i = 1:length(ssa)]
     argtypes!(cinfo, argtypes, funcs, ssa)
-
+    
     wat = [translate(i, cinfo, ssa[i]) for i = 1:length(ssa)]
     wat = inline(wat)
     decl = declaration(cinfo, func, argtypes[func], Rtype)
