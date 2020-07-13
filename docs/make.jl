@@ -1,3 +1,4 @@
+push!(LOAD_PATH,"../src/")
 using WebAssemblyText
 using Documenter
 
@@ -9,13 +10,16 @@ makedocs(;
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://andersgee.github.io/WebAssemblyText.jl",
-        assets=String[],
+        assets=["assets/favicon.ico"],
     ),
-    pages=[
-        "Home" => "index.md",
-    ],
+    pages = [
+        "Home"=>"index.md",
+        "Internals" => "Internals.md",
+    ]
 )
 
 deploydocs(;
-    repo="github.com/andersgee/WebAssemblyText.jl",
+    repo="github.com/andersgee/WebAssemblyText.jl.git",
+    target = "build",
+    branch = "gh-pages",
 )
