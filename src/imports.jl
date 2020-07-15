@@ -14,6 +14,7 @@ function getimports(imports::Dict)
     if length(jsimports) > 0
         println("INFO: There are assumed imports! The compiled wasm may work by passing this this when instantiating it from JavaScript:")
         println(jsimportsstring(jsimports))
+        println()
     end
     return join(watimports, "\n")
 end
@@ -51,7 +52,8 @@ function importdeclaration(cinfo, func, argtypes, Rtype)
         rt = Rtype <: AbstractFloat ? "f32" : "i32"
         push!(decl, "(result $rt)")
     end
-    return join(["("; decl; ")"], " ")
+    decl = join(decl," ")
+    return "($decl)"
 end
 
 """
@@ -92,3 +94,48 @@ function jsimportsstring(jsimports)
     push!(str, "}")
     return join(str)
 end
+
+#a few basic are builtin to wasm. these can be translated.
+#other basic functions are bultin to js, (in Math module), these can be imported
+#many functions are builtin to julia. translate the ones we can.
+#https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math
+
+#=
+Math.pow(x, y)
+Math.random()
+
+Math.hypot([x[, y[, …]]])
+Math.max([x[, y[, …]]])
+Math.min([x[, y[, …]]])
+
+
+#same name in js and julia
+Math.sign(x)
+Math.sqrt(x)
+Math.cbrt(x)
+Math.acos(x)
+Math.acosh(x)
+Math.asin(x)
+Math.asinh(x)
+Math.atan(x)
+Math.atanh(x)
+Math.atan2(y, x)
+Math.ceil(x)
+Math.cos(x)
+Math.cosh(x)
+Math.expm1(x)
+Math.exp(x)
+Math.log(x)
+Math.log1p(x)
+Math.log10(x)
+Math.log2(x)
+Math.sin(x)
+Math.sinh(x)
+Math.tan(x)
+Math.tanh(x)
+=#
+
+
+#julia
+#Base.MathConstants: π, ℯ, γ, φ, catalan
+

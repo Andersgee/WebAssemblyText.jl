@@ -40,18 +40,22 @@ Restructure items for more straightforward translation.
 - .wat dont have Bool or Nothing types so iterating across zero does NOT work.. figure out a way to solve this
 """
 restructure(i::Integer, ssa::Array, item) = item
+function restructure(i::Integer, ssa::Array, item::GlobalRef)
+    evaluatedref = Base.eval(Evalscope,item)
+    #π, ℯ, γ, φ and catalan are refs that will eval to <:Irrational.
+    if typeof(evaluatedref) <: Irrational
+        return AbstractFloat(evaluatedref)
+    else
+        return item
+    end
+end
 
 function restructure(i::Integer, ssa::Array, items::Array)
-    if isa(items[1], GlobalRef) && string(items[1].name)[end] == '!'
-        # cant use exclamations in .wat unfortunately
-        items[1] = GlobalRef(Evalscope, Symbol(string(items[1].name)[1:end - 1]))
-    end
-
     if (hasname(items[1], :(+)) || hasname(items[1], :(*))) && length(items) > 3
         # expand Nary
         expanded = items[1:3]
         for i = 4:length(items)
-            expanded = [items[1], items[i], expanded]
+            expanded = [items[1], items[i], restructure.(expanded)]
         end
         return expanded
     elseif hasname(items[1], :(getfield))

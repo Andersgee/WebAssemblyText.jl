@@ -94,6 +94,7 @@ function process(func, funcs, argtypes, imports; debuginfo::Bool=false)
     argtypes!(cinfo, argtypes, funcs, ssa)
     imports!(imports, cinfo, funcs, builtinfuncs, ssa)
     
+    debuginfo && display(cinfo)
     debuginfo && debugprint(ssa, cinfo)
     
     return ssa, wat
