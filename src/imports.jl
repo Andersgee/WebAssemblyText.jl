@@ -5,8 +5,9 @@ Get a .wat string with any used functions that are not builtins or userdefined.
 
 # Details
 - a few basic are builtin to wasm. these can be translated.
-- other basic functions are bultin to js, (in Math module), these can be imported
-- many more are builtin to julia. Either implement them as .wat or leave it for the user to implement.
+- other basic functions are bultin to JavaScripts global Math object, these can be imported
+- many more are builtin to julia... so they need to be implemented either in .jl, .wat or .js
+- give warning if the function cant be imported from js Math.
 """
 function getimports(imports::Dict)
     watimports = []
@@ -17,76 +18,11 @@ function getimports(imports::Dict)
     end
 
     if length(jsimports) > 0
-        println("INFO: There are assumed imports! The compiled wasm may work by passing this this when instantiating it from JavaScript:")
+        println("INFO: There are assumed imports! Pass this as imports when instantiating WebAssembly from JavaScript:")
         println(jsimportsstring(jsimports))
         println()
     end
     return join(watimports, "\n")
-end
-
-imports!(imports::Dict, ci::CodeInfo, funcs::Dict, builtinfuncs::Dict, item) = nothing
-function imports!(imports::Dict, ci::CodeInfo, funcs::Dict, builtinfuncs::Dict, items::Array)
-    if isimport(funcs, builtinfuncs, items[1])
-        func = items[1]
-        argtypes = itemtype.((ci,), items[2:end])
-        ct = code_typed(Base.eval(Evalscope, func), Tuple{argtypes...}; optimize=false, debuginfo=:none)[1]
-        cinfo = ct[1]
-        Rtype = ct[2]
-
-        imports[func] = [importdeclaration(cinfo, func.name, argtypes, Rtype), jsimportentry(cinfo, func.name, argtypes, Rtype)]
-    end
-    imports!.((imports,), (ci,), (funcs,), (builtinfuncs,), items)
-end
-
-isimport(funcs, builtinfuncs, item) = false
-isimport(funcs, builtinfuncs, item::GlobalRef) = !haskey(builtinfuncs, item.name) && !haskey(funcs, item.name) && !haskey(floatops, item.name) && !haskey(intops, item.name)
-
-function importdeclaration(cinfo, func, argtypes, Rtype)
-    Nparams = length(argtypes)
-    slotnames = cinfo.slotnames[2:end]
-    slottypes = cinfo.slottypes[2:end]
-    slottypes = [slottype <: AbstractFloat ? "f32" : "i32" for slottype in slottypes]
-
-    decl = ["func \$$func (import \"imports\" \"$func\")"]
-    for i = 1:length(slotnames)
-        if i <= Nparams
-            push!(decl, "(param \$$(slotnames[i]) $(slottypes[i]))")
-        end
-    end
-    if !(Rtype <: Nothing) && Rtype <: Number
-        rt = Rtype <: AbstractFloat ? "f32" : "i32"
-        push!(decl, "(result $rt)")
-    end
-    decl = join(decl," ")
-    return "($decl)"
-end
-
-"""
-    jsimportentry(cinfo, func, argtypes, Rtype)
-
-Get a string of possible javascript Math module import, assuming it exists in the Math module.
-
-# Details
-from a func such as sin, return a string like
-\"sin: (x) => Math.sin(x)\"
-"""
-function jsimportentry(cinfo, func, argtypes, Rtype)
-    Nparams = length(argtypes)
-    slotnames = cinfo.slotnames[2:end]
-    slottypes = cinfo.slottypes[2:end]
-    slottypes = [slottype <: AbstractFloat ? "f32" : "i32" for slottype in slottypes]
-
-    jskey = "\"$(func)\": "
-    jsval = " => Math.$(func)"
-    paramnames = []
-    for i = 1:length(slotnames)
-        if i <= Nparams
-            push!(paramnames, slotnames[i])
-        end
-    end
-    pn = join(["("; join(paramnames, " "); ")"])
-
-    return join([jskey,pn,jsval,pn])
 end
 
 function jsimportsstring(jsimports)
@@ -100,45 +36,106 @@ function jsimportsstring(jsimports)
     return join(str)
 end
 
+"""
+    jsimportentry(func, argtypes)
 
+Get a string of possible javascript Math module import, assuming it exists in the Math module.
+
+# Details
+from a func such as sin, return a string like
+\"sin: (x) => Math.sin(x)\"
+"""
+function jsimportentry(func, argtypes)
+    Nparams = length(argtypes)
+    
+    #looking at #https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math
+    #the Math object in js have the same function names as julia has, except for pow and random
+    #ofcourse many julia functions dont exist at all in js. but this atleast makes sure
+    #the ones that do can be imported correctly
+    if func == :(^)
+        jsfunc = "pow"
+    elseif func == :(rand)
+        jsfunc = "random"
+    else
+        jsfunc = func
+    end
+
+    jskey = "\"$(func)\": "
+    jsval = " => Math.$(jsfunc)"
+    paramnames = []
+    for i = 1:Nparams
+        push!(paramnames, '`'+i) #unicode char, '`'+1 means a, '`'+2 means b
+    end
+    pn = join(["("; join(paramnames, ", "); ")"])
+
+    return join([jskey,pn,jsval,pn])
+end
+
+
+imports!(imports::Dict, ci::CodeInfo, funcs::Dict, builtinfuncs::Dict, item) = nothing
+function imports!(imports::Dict, ci::CodeInfo, funcs::Dict, builtinfuncs::Dict, items::Array)
+    if isimport(funcs, builtinfuncs, items[1])
+        func = items[1]
+        argtypes = itemtype.((ci,), items[2:end])
+        ct = code_typed(Base.eval(Evalscope, func), Tuple{argtypes...}; optimize=false, debuginfo=:none)[1]
+        cinfo = ct[1]
+        Rtype = ct[2]
+
+        imports[func] = [importdeclaration(func.name, argtypes, Rtype), jsimportentry(func.name, argtypes)]
+
+        if !(string(func.name) in jsglobalMath)
+            println("WARNING: function \"$(func.name)\" is not available in Math.$(func.name). Adjust recommended imports to call your own function.")
+        end
+    end
+    imports!.((imports,), (ci,), (funcs,), (builtinfuncs,), items)
+end
+
+isimport(funcs, builtinfuncs, item) = false
+isimport(funcs, builtinfuncs, item::GlobalRef) = !haskey(builtinfuncs, item.name) && !haskey(funcs, item.name) && !haskey(floatops, item.name) && !haskey(intops, item.name)
+
+function importdeclaration(func, argtypes, Rtype)
+    Nparams = length(argtypes)
+    paramtypes = [paramtype <: AbstractFloat ? "f32" : "i32" for paramtype in argtypes]
+
+    decl = ["func \$$func (import \"imports\" \"$func\")"]
+    for i = 1:Nparams
+        push!(decl, "(param \$$('`'+i) $(paramtypes[i]))")
+    end
+    if !(Rtype <: Nothing) && Rtype <: Number
+        rt = Rtype <: AbstractFloat ? "f32" : "i32"
+        push!(decl, "(result $rt)")
+    end
+    decl = join(decl," ")
+    return "($decl)"
+end
+
+#the functions available in js Math object (removed wasm builtins)
 #https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math
-
-#=
-Math.pow(x, y)
-Math.random()
-
-Math.hypot([x[, y[, …]]])
-Math.max([x[, y[, …]]])
-Math.min([x[, y[, …]]])
-
-
-#same name in js and julia
-Math.sign(x)
-Math.sqrt(x)
-Math.cbrt(x)
-Math.acos(x)
-Math.acosh(x)
-Math.asin(x)
-Math.asinh(x)
-Math.atan(x)
-Math.atanh(x)
-Math.atan2(y, x)
-Math.ceil(x)
-Math.cos(x)
-Math.cosh(x)
-Math.expm1(x)
-Math.exp(x)
-Math.log(x)
-Math.log1p(x)
-Math.log10(x)
-Math.log2(x)
-Math.sin(x)
-Math.sinh(x)
-Math.tan(x)
-Math.tanh(x)
-=#
-
-
-#julia
-#Base.MathConstants: π, ℯ, γ, φ, catalan
-
+jsglobalMath=[
+"^", #pow
+"rand",#random
+"acos",
+"acosh",
+"asin",
+"asinh",
+"atan",
+"atanh",
+"atan2",
+"cbrt",
+"cos",
+"cosh",
+"exp",
+"expm1",
+"hypot",
+"imul",
+"log",
+"log1p",
+"log10",
+"log2",
+"sign",
+"sin",
+"sinh",
+"tan",
+"tanh",
+"trunc",
+]
