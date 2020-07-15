@@ -55,7 +55,7 @@ function codeinfo(func, argtypes::Array)
     ct = code_typed(Base.eval(Evalscope, func), Tuple{argtypes...}; optimize=false, debuginfo=:none)[1] # none, source
     cinfo = ct[1]
     Rtype = ct[2]
-    length(Rtype.parameters) > 1 && error("Tuple return not not allowed in WebAssembly. $func returns: $Rtype")
+    length(Rtype.parameters) > 1 && error("WebAssembly only allow functions to return a single number or nothing. function $func returns $Rtype")
 
     for (i, st) in enumerate(cinfo.slottypes)
         if isa(st, Union) # aka iterator variable

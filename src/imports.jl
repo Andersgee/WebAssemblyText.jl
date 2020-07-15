@@ -2,6 +2,11 @@
     getimports(imports::Dict)
 
 Get a .wat string with any used functions that are not builtins or userdefined.
+
+# Details
+- a few basic are builtin to wasm. these can be translated.
+- other basic functions are bultin to js, (in Math module), these can be imported
+- many more are builtin to julia. Either implement them as .wat or leave it for the user to implement.
 """
 function getimports(imports::Dict)
     watimports = []
@@ -95,9 +100,7 @@ function jsimportsstring(jsimports)
     return join(str)
 end
 
-#a few basic are builtin to wasm. these can be translated.
-#other basic functions are bultin to js, (in Math module), these can be imported
-#many functions are builtin to julia. translate the ones we can.
+
 #https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math
 
 #=

@@ -35,13 +35,11 @@ Get a wat string from item, specialized on item type.
 translate(i::Integer, ci::CodeInfo, item) = item
 translate(i::Integer, ci::CodeInfo, item::AbstractFloat) = "(f32.const $item)"
 translate(i::Integer, ci::CodeInfo, item::Number) = "(i32.const $item)"
+translate(i::Integer, ci::CodeInfo, item::Nothing) = "(i32.const 0)"
+translate(i::Integer, ci::CodeInfo, item::Bool) = item ? "(i32.const 1)" : "(i32.const 0)"
 translate(i::Integer, ci::CodeInfo, item::SlotNumber) = "(local.get \$$(ci.slotnames[item.id]))"
 translate(i::Integer, ci::CodeInfo, item::TypedSlot) = "(local.get \$$(ci.slotnames[item.id]))"
-translate(i::Integer, ci::CodeInfo, item::Nothing) = "(i32.const 0)"
-function translate(i::Integer ,ci::CodeInfo, item::GlobalRef)
-    #println("GlobalRef: ",item) #WebAssemblyText.Evalscope.pi
-    return "call \$$(item.name)"
-end
+translate(i::Integer ,ci::CodeInfo, item::GlobalRef) = "call \$$(item.name)"
 
 """
     translate(ci::CodeInfo, items::Array)
@@ -49,7 +47,7 @@ end
 Get a wat string from items, branching to special cases based on items[1].
 """
 function translate(i::Integer, ci::CodeInfo, items::Array)
-    # intrinsic to webassembly?
+    # builtin to webassembly?
     if is_floatop(ci, items)
         return ["$(floatops[items[1].name][1])"; translate(i, ci, items[2:end])]
     elseif is_intop(ci, items)
@@ -78,6 +76,7 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         else
             return ["br_if 1", ["i32.eqz"; translate(i, ci, items[2])]] # break
         end
+
     # default
     else
         return translate.((i,), (ci,), items)
@@ -98,15 +97,15 @@ floatops = Dict(
 :(>) => ["f32.gt",2],
 :(<=) => ["f32.le",2],
 :(>=) => ["f32.ge",2],
+:(min) => ["f32.min",2],
+:(max) => ["f32.max",2],
+:(copysign) => ["f32.copysign",2],
 :(abs) => ["f32.abs",1],
 :(ceil) => ["f32.ceil",1],
 :(floor) => ["f32.floor",1],
 :(trunc) => ["f32.trunc",1],
 :(round) => ["f32.nearest",1],
 :(sqrt) => ["f32.sqrt",1],
-:(min) => ["f32.min",2],
-:(max) => ["f32.max",2],
-:(copysign) => ["f32.copysign",2],
 :(float) => ["f32.convert_i32_s",1],
 :(Int) => ["i32.trunc_f32_s",1],
 #:(^) => ["call \$pow",2],

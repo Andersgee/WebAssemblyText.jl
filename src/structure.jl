@@ -8,10 +8,23 @@ There are two expression flavors:
 - head in args[1]
 - head in head
 make them be represented the same way
+
+eval refs of constants
 """
 structure(item) = item
 structure(items::Array) = structure.(items)
 structure(item::TypedSlot) = SlotNumber(item.id)
+
+function structure(item::GlobalRef)
+    evaluatedref = Base.eval(Evalscope,item)
+    #π, ℯ, γ, φ and catalan are refs that will eval to <:Irrational.
+    if typeof(evaluatedref) <: Irrational
+        return AbstractFloat(evaluatedref)
+    else
+        return item
+    end
+end
+
 function structure(item::Expr)
     if item.head == :(call)
         head = item.args[1]
@@ -40,22 +53,13 @@ Restructure items for more straightforward translation.
 - .wat dont have Bool or Nothing types so iterating across zero does NOT work.. figure out a way to solve this
 """
 restructure(i::Integer, ssa::Array, item) = item
-function restructure(i::Integer, ssa::Array, item::GlobalRef)
-    evaluatedref = Base.eval(Evalscope,item)
-    #π, ℯ, γ, φ and catalan are refs that will eval to <:Irrational.
-    if typeof(evaluatedref) <: Irrational
-        return AbstractFloat(evaluatedref)
-    else
-        return item
-    end
-end
-
 function restructure(i::Integer, ssa::Array, items::Array)
-    if (hasname(items[1], :(+)) || hasname(items[1], :(*))) && length(items) > 3
+    #if length(items) > 3 && hasanyname(items[1], [:(+), :(*), :(max), :(min)])
+    if length(items) > 3 && hasanyname(items[1], keys(floatops))
         # expand Nary
         expanded = items[1:3]
         for i = 4:length(items)
-            expanded = [items[1], items[i], restructure.(expanded)]
+            expanded = [items[1], items[i], expanded]
         end
         return expanded
     elseif hasname(items[1], :(getfield))
