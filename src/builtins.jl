@@ -32,7 +32,7 @@ builtinfuncs = Dict(
 (select (local.get \$i) (f32.const 0.0) (i32.and (f32.le (local.get \$i) (local.get \$N)) (f32.ge (local.get \$i) (local.get \$n)))))""",
 :(getindex) => """(func \$getindex (param \$v i32) (param \$i i32) (result f32)
 (f32.load (i32.add (local.get \$v) (i32.shl (local.get \$i) (i32.const 2)))))""",
-:(setindex) => """(func \$setindex (param \$v i32) (param \$x f32) (param \$i i32)
+:(setindex!) => """(func \$setindex! (param \$v i32) (param \$x f32) (param \$i i32)
 (f32.store (i32.add (local.get \$v) (i32.shl (local.get \$i) (i32.const 2))) (local.get \$x)))""",
 :(firstindex) => """(func \$firstindex (param \$v i32) (result i32)
 (i32.const 1))""",

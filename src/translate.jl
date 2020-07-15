@@ -107,7 +107,6 @@ floatops = Dict(
 :(float) => ["f32.convert_i32_s",1],
 :(Int) => ["i32.trunc_f32_s",1],
 :(^) => ["call \$pow",2],
-:(setindex!) => ["call \$setindex",2], # without exclamation
 # ""=>["f32.neg",1],
 # ""=>["f32.load",1],
 # ""=>["f32.store",2],

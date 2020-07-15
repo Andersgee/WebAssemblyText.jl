@@ -1,10 +1,15 @@
 """
     addblocks!(i::Integer, ssa::Array, item::Array)
 
-Insert block and loop control flow into ssa.
+Insert control instructions into ssa.
+
+# Detals
+- block, loop, if,
+- br, br_if, br_table, return
+- unreachable, nop, drop
 
 # Details
-- Replace GotoNode with "br))" and replace the ssa[goto.label] with "(block (loop"
+- Replace item::GotoNode with "br))" and its target ssa[item.label] with "(block (loop"
 - )
 """
 function addblocks!(i::Integer, ssa::Array, item)

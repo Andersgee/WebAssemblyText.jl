@@ -24,7 +24,8 @@ function blockparse(str::String)
             argtypes[ex[2]] = length(ex) > 2 ? typeof.(ex[3:end]) : []
         end
     end
-    return modulename, funcs, argtypes
+    imports = Dict()
+    return modulename, imports, funcs, argtypes
 end
 
 arrayify(item) = item
