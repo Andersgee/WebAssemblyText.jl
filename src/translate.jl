@@ -83,8 +83,13 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
     end
 end
 
-is_intop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && (itemtype(ci, items[2]) <: Integer || itemtype(ci, items[2]) <: Bool || itemtype(ci, items[2]) <: Nothing) && items[1].name in keys(intops)
-is_floatop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && itemtype(ci, items[2]) <: AbstractFloat && items[1].name in keys(floatops)
+#is_intop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && (itemtype(ci, items[2]) <: Integer || itemtype(ci, items[2]) <: Bool || itemtype(ci, items[2]) <: Nothing) && items[1].name in keys(intops)
+#is_floatop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && items[1].name in keys(floatops) && (itemtype(ci, items[2]) <: AbstractFloat || itemtype(ci, items[3]) <: AbstractFloat)
+
+is_intop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && items[1].name in keys(intops) && (hasitemtype(ci, items[2], [Integer, Bool, Nothing]) || hasitemtype(ci, items[3], [Integer, Bool, Nothing]))
+is_floatop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && items[1].name in keys(floatops) && hasitemtype(ci, items[2:3], AbstractFloat)
+
+
 
 floatops = Dict(
 :(+) => ["f32.add",2],

@@ -59,8 +59,7 @@ Restructure items for more straightforward translation.
 """
 restructure(i::Integer, ssa::Array, item) = item
 function restructure(i::Integer, ssa::Array, items::Array)
-    #if length(items) > 3 && hasanyname(items[1], [:(+), :(*), :(max), :(min)])
-    if length(items) > 3 && hasanyname(items[1], keys(floatops))
+    if length(items) > 3 && hasname(items[1], keys(floatops))
         # expand Nary
         expanded = items[1:3]
         for i = 4:length(items)

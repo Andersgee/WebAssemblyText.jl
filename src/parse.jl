@@ -1,67 +1,43 @@
 """
-    topexpressions(str::String)
+    blockparse(str::String)
 
-Meta.parse() on entire input. return funcs, argtypes.
+Initial Meta.parse() on entire input. return funcs and initialize Dicts of argtypes and imports.
+
+# Details: 
 - funcs: a dict with function,expression as key,values
 - argtypes: a dict with with function,argtypes as key,values
-
-argtypes will not be known for all funcs right away.
+- imports: a dict with with function,importstring as key,values
 """
 function blockparse(str::String)
-    block = arrayify(Meta.parse("begin $str end").args)
-    display(block)
-    if block[1][1] == Symbol("module")
-        modulename = block[1][3]
-        block = block[1][4]
-    else
-        modulename = ""
-    end
-
+    block = pruneLineNumberNode(Meta.parse("begin $str end").args)
     funcs = Dict(blockfuncnames(block) .=> blockfuncexpressions(block))
-    
     argtypes = Dict()
+    imports = Dict()
+
+    #fill in top level argtypes for function calls
     for ex in block
-        if ex[1] == :(call)
-            argtypes[ex[2]] = length(ex) > 2 ? typeof.(ex[3:end]) : []
+        if ex.head == :(call)
+            name = ex.args[1]
+            args = ex.args[2:end]
+            #typeof(eval(arg)) instead of typeof(arg) allows top level call with rand() etc.
+            types = typeof.([Base.eval(Evalscope, arg) for arg in args])
+            argtypes[name] = types
         end
     end
-    imports = Dict()
-    return modulename, imports, funcs, argtypes
+    return funcs, argtypes, imports
 end
 
-"""
-    arrayify(items)
 
-Remove LineNumberNodes and turn expressions to arrays
+pruneLineNumberNode(item) = item
+pruneLineNumberNode(items::Array) = [pruneLineNumberNode(item) for item in items if !isa(item, LineNumberNode)]
+pruneLineNumberNode(item::Expr) = item.head == :(block) ? pruneLineNumberNode(item.args) : Expr(item.head, pruneLineNumberNode(item.args)...)
 
-# Details
-a string like
-```julia
-m = 67.1
-p(a) = 3.0*a
-function kek(x)
-    a = 3.1
-    return x*2.0 + m*a
-end
-kek(3.0)
-```
-will be arrayify(Meta.parse("begin \$str end").args) into
-```
-[:(=), :m, 67.1]
-[:(=), [:call, :p, :a], [[:call, :*, 3.0, :a]]]
-[:function, [:call, :kek, :x], [[:return, [:call, :+, [:call, :*, :x, 2.0], :m]]]]
-[:call, :kek, 3.0]
-```
-"""
-arrayify(item) = item
-arrayify(items::Array) = [arrayify(item) for item in items if !isa(item, LineNumberNode)]
-arrayify(item::Expr) = item.head == :(block) ? arrayify(item.args) : [item.head; arrayify(item.args)]
-
-isfunction(ex::Array) = (ex == Symbol("function") || ex[1] == :(=)) && isa(ex[2],Array) && ex[2][1] == :(call)
+isfunction(ex::Expr) = ex.head == Symbol("function") || ex.head == :(=)
 isfunction(ex) = false
 
-blockfuncnames(block) = [ex[2][2] for ex in block if isfunction(ex)]
-blockfuncexpressions(block) = [[ex[3]][1] for ex in block if isfunction(ex)]
+blockfuncnames(block) = [ex.args[1].args[1] for ex in block if isfunction(ex)]
+blockfuncexpressions(block) = [ex.args[2] for ex in block if isfunction(ex)]
+
 """
     codeinfo(func::Symbol, argtypes::Array)
 

@@ -11,6 +11,10 @@ itemtype(ci::CodeInfo, item::SSAValue) = ci.ssavaluetypes[item.id]
 itemtype(ci::CodeInfo, item::TypedSlot) = itemtype(ci, SlotNumber(item.id))
 itemtype(ci::CodeInfo, item::Compiler.Const) = itemtype(ci, item.val)
 
+hasitemtype(ci::CodeInfo, item, type::DataType) = itemtype(ci, item) <: type
+hasitemtype(ci::CodeInfo, item, types::Array{DataType,1}) = any([itemtype(ci, item) <: type for type in types])
+hasitemtype(ci::CodeInfo, items::Array, type::DataType) = any([itemtype(ci, item) <: type for item in items])
+
 """
     argtypes!(ci::CodeInfo, argtypes::Dict, funcs::Dict, items::Array)
 

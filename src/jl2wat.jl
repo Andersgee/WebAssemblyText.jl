@@ -46,7 +46,7 @@ function jlstring2wat(str::AbstractString; debuginfo::Bool=false)
         return e
     end
     
-    modulename, imports, funcs, argtypes = blockparse(str)
+    funcs, argtypes, imports = blockparse(str)
     SSAs = []
     WATs = []
     processed = Dict()
@@ -66,7 +66,7 @@ function jlstring2wat(str::AbstractString; debuginfo::Bool=false)
     
     WATs = joinn([getimports(imports); WATs; getbuiltins(SSAs)...])
     memoryimport = """(memory (import "imports" "memory") 1)"""
-    return "(module $modulename\n$memoryimport\n\n$WATs\n)"
+    return "(module\n$memoryimport\n\n$WATs\n)"
 end
 
 """
