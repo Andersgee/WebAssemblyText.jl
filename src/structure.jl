@@ -7,9 +7,10 @@ Expression as a vector: [head, args...]
 There are two expression flavors:
 - head in args[1]
 - head in head
+
 make them be represented the same way
 
-eval refs of constants
+- eval refs of constants
 """
 structure(item) = item
 structure(items::Array) = structure.(items)
@@ -17,9 +18,13 @@ structure(item::TypedSlot) = SlotNumber(item.id)
 
 function structure(item::GlobalRef)
     evaluatedref = Base.eval(Evalscope,item)
-    #π, ℯ, γ, φ and catalan are refs that will eval to <:Irrational.
-    if typeof(evaluatedref) <: Irrational
-        return AbstractFloat(evaluatedref)
+    #evaulate refs to constants, also turn π, ℯ, γ, φ and catalan to float rather than irrational
+    if typeof(evaluatedref) <: Number
+        if typeof(evaluatedref) <: AbstractFloat || typeof(evaluatedref) <: Irrational
+            return AbstractFloat(evaluatedref)
+        else
+            return evaluatedref
+        end
     else
         return item
     end

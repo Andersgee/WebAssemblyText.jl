@@ -9,6 +9,7 @@ argtypes will not be known for all funcs right away.
 """
 function blockparse(str::String)
     block = arrayify(Meta.parse("begin $str end").args)
+    display(block)
     if block[1][1] == Symbol("module")
         modulename = block[1][3]
         block = block[1][4]
@@ -28,14 +29,39 @@ function blockparse(str::String)
     return modulename, imports, funcs, argtypes
 end
 
+"""
+    arrayify(items)
+
+Remove LineNumberNodes and turn expressions to arrays
+
+# Details
+a string like
+```julia
+m = 67.1
+p(a) = 3.0*a
+function kek(x)
+    a = 3.1
+    return x*2.0 + m*a
+end
+kek(3.0)
+```
+will be arrayify(Meta.parse("begin \$str end").args) into
+```
+[:(=), :m, 67.1]
+[:(=), [:call, :p, :a], [[:call, :*, 3.0, :a]]]
+[:function, [:call, :kek, :x], [[:return, [:call, :+, [:call, :*, :x, 2.0], :m]]]]
+[:call, :kek, 3.0]
+```
+"""
 arrayify(item) = item
-arrayify(item::LineNumberNode) = item
-arrayify(items::Array) = [arrayify(item) for item in items if !isa(item, LineNumberNode)] 
+arrayify(items::Array) = [arrayify(item) for item in items if !isa(item, LineNumberNode)]
 arrayify(item::Expr) = item.head == :(block) ? arrayify(item.args) : [item.head; arrayify(item.args)]
 
-blockfuncnames(block) = [ex[2][2] for ex in block if ex[1] == Symbol("function") || ex[1] == :(=)]
-blockfuncexpressions(block) = [[ex[3]][1] for ex in block if ex[1] == Symbol("function") || ex[1] == :(=)]
+isfunction(ex::Array) = (ex == Symbol("function") || ex[1] == :(=)) && isa(ex[2],Array) && ex[2][1] == :(call)
+isfunction(ex) = false
 
+blockfuncnames(block) = [ex[2][2] for ex in block if isfunction(ex)]
+blockfuncexpressions(block) = [[ex[3]][1] for ex in block if isfunction(ex)]
 """
     codeinfo(func::Symbol, argtypes::Array)
 
