@@ -6,6 +6,8 @@ itemname(item) = isa(item, GlobalRef) ? item.name : item
 itemname(item::Array) = itemname.(item)
 
 function debugprint(ssa, ci)
+    println("\nDebug info:")
     printssatypes(ssa, ci)
     printslots(ci)
+    println()
 end
