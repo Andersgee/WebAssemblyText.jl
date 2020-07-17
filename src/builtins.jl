@@ -36,10 +36,10 @@ builtinfuncs = Dict(
 (f32.store (i32.add (local.get \$v) (i32.shl (local.get \$i) (i32.const 2))) (local.get \$x)))""",
 :(firstindex) => """(func \$firstindex (param \$v i32) (result i32)
 (i32.const 1))""",
-:(lastindex) => """(func \$lastindex (param \$v i32) (result f32)
-(local.get \$v))""",
-:(length) => """(func \$length (param \$v i32) (result f32)
-(local.get \$v))""",
+:(lastindex) => """(func \$lastindex (param \$v i32) (result i32)
+(i32.trunc_f32_s (f32.load (local.get \$v))))""",
+:(length) => """(func \$length (param \$v i32) (result i32)
+(i32.trunc_f32_s (f32.load (local.get \$v))))""",
 )
 
 # TODO

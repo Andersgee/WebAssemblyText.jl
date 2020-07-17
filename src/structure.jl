@@ -70,6 +70,8 @@ function restructure(i::Integer, ssa::Array, items::Array)
         return items[2] # the SlotNumber of the TypedSlot
     elseif hasname(items[1], :(ifelse))
         return [items[1],items[3],items[4],items[2]]
+    elseif hasname(items[1], :(:))
+        return nothing
     elseif hasname(items[1], :(iterate))
         target = items[2].id
         iteratorargs = ssa[target][2:end]

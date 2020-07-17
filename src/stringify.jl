@@ -24,9 +24,7 @@ function inline(ssa::Array)
         ssa[i] = []
     end
     
-    for (i, line) in enumerate(ssa)
-        addblocks!(i, ssa, line)
-    end
+    ssa = insertblocks(ssa)
     
     clean_ssa = [line for line in ssa if !isa(line, Nothing) && length(line) > 0]
 

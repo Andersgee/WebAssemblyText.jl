@@ -64,13 +64,13 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         else
             return ["i32.eqz", translate(i, ci, items[2])]
         end
-    elseif hasname(items[1], :(:))
-        return nothing # dont translate iterator declaration (but use it in restructure)
     elseif hasname(items[1], :(=))
         return ["local.set \$$(ci.slotnames[items[2].id])", translate(i, ci, items[3])]
     elseif hasname(items[1], :(gotoifnot))
        # [gotoifnot,cond,target] => [br_if Nlevels, not(cond)]
         target = items[3]
+        #return [Expr(:(br_if), target), ["i32.eqz"; translate(i, ci, items[2])]] #decide later what this means (cant do arbitrary goto in wasm)
+        
         if target < i
             return ["br_if 0", ["i32.eqz"; translate(i, ci, items[2])]] # continue
         else
@@ -82,9 +82,6 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         return translate.((i,), (ci,), items)
     end
 end
-
-#is_intop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && (itemtype(ci, items[2]) <: Integer || itemtype(ci, items[2]) <: Bool || itemtype(ci, items[2]) <: Nothing) && items[1].name in keys(intops)
-#is_floatop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && items[1].name in keys(floatops) && (itemtype(ci, items[2]) <: AbstractFloat || itemtype(ci, items[3]) <: AbstractFloat)
 
 is_intop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && items[1].name in keys(intops) && (hasitemtype(ci, items[2], [Integer, Bool, Nothing]) || hasitemtype(ci, items[3], [Integer, Bool, Nothing]))
 is_floatop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && items[1].name in keys(floatops) && hasitemtype(ci, items[2:3], AbstractFloat)
@@ -135,6 +132,7 @@ intops = Dict(
 :(<<) => ["i32.shl",2],
 :(>>) => ["i32.shr_s",2],
 :(==) => ["i32.eq",2],
+:(===) => ["i32.eq",2],
 :(!=) => ["i32.ne",2],
 :(<) => ["i32.lt_s",2],
 :(>) => ["i32.gt_s",2],

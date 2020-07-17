@@ -1,7 +1,7 @@
 module WebAssemblyText
 
 using Core: Compiler, SSAValue, SlotNumber, TypedSlot, GotoNode, CodeInfo
-
+using Core.Compiler: GotoIfNot
 # Evalscope is a dummy module where all evaluated expressions live.
 module Evalscope end
 
