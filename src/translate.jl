@@ -40,6 +40,7 @@ translate(i::Integer, ci::CodeInfo, item::Bool) = item ? "(i32.const 1)" : "(i32
 translate(i::Integer, ci::CodeInfo, item::SlotNumber) = "(local.get \$$(ci.slotnames[item.id]))"
 translate(i::Integer, ci::CodeInfo, item::TypedSlot) = "(local.get \$$(ci.slotnames[item.id]))"
 translate(i::Integer ,ci::CodeInfo, item::GlobalRef) = "call \$$(item.name)"
+translate(i::Integer ,ci::CodeInfo, item::NewvarNode) = nothing
 
 """
     translate(ci::CodeInfo, items::Array)
@@ -47,7 +48,7 @@ translate(i::Integer ,ci::CodeInfo, item::GlobalRef) = "call \$$(item.name)"
 Get a wat string from items, branching to special cases based on items[1].
 """
 function translate(i::Integer, ci::CodeInfo, items::Array)
-    #dont translate?
+    # dont translate?
     if isnothing(items)
         return nothing
     
@@ -79,11 +80,11 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
     end
 end
 
-is_floatop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && items[1].name in keys(floatops) && (hasitemtype(ci, items[2], AbstractFloat) || (length(items)>2 && hasitemtype(ci, items[3], AbstractFloat)))
-is_intop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && items[1].name in keys(intops) && (hasitemtype(ci, items[2], [Integer, Bool, Nothing]) || (length(items)>2 && hasitemtype(ci, items[3], [Integer, Bool, Nothing])))
+is_floatop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && items[1].name in keys(floatops) && (hasitemtype(ci, items[2], AbstractFloat) || (length(items) > 2 && hasitemtype(ci, items[3], AbstractFloat)))
+is_intop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && items[1].name in keys(intops) && (hasitemtype(ci, items[2], [Integer, Bool, Nothing]) || (length(items) > 2 && hasitemtype(ci, items[3], [Integer, Bool, Nothing])))
 
 floatops = Dict(
-:(+) => "f32.add", #these consume 2 args 
+:(+) => "f32.add", # these consume 2 args 
 :(-) => "f32.sub",
 :(*) => "f32.mul",
 :(/) => "f32.div",
@@ -96,7 +97,7 @@ floatops = Dict(
 :(min) => "f32.min",
 :(max) => "f32.max",
 :(copysign) => "f32.copysign",
-:(abs) => "f32.abs", #these consume 1 arg
+:(abs) => "f32.abs", # these consume 1 arg
 :(ceil) => "f32.ceil",
 :(floor) => "f32.floor",
 :(trunc) => "f32.trunc",
@@ -104,7 +105,7 @@ floatops = Dict(
 :(sqrt) => "f32.sqrt",
 :(float) => "f32.convert_i32_s",
 :(Int) => "i32.trunc_f32_s",
-#:(^) => ["call \$pow",2],
+# :(^) => ["call \$pow",2],
 # ""=>["f32.neg",1],
 # ""=>["f32.load",1],
 # ""=>["f32.store",2],
@@ -112,7 +113,7 @@ floatops = Dict(
 )
 
 intops = Dict(
-:(+) => "i32.add", #these consume 2 args 
+:(+) => "i32.add", # these consume 2 args 
 :(-) => "i32.sub",
 :(*) => "i32.mul",
 :(div) => "i32.div_s", # julia 4/2 will return float. but div(4,2) wont
@@ -132,14 +133,14 @@ intops = Dict(
 :(>) => "i32.gt_s",
 :(<=) => "i32.le_s",
 :(>=) => "i32.ge_s",
-:(!) => "i32.eqz", #these consume 1 arg
+:(!) => "i32.eqz", # these consume 1 arg
 :(not_int) => "i32.eqz",
 :(leading_zeros) => "i32.clz",
 :(trailing_zeros) => "i32.ctz",
 :(count_ones) => "i32.popcnt",
 :(float) => "f32.convert_i32_s",
 :(Int) => "i32.trunc_f32_s",
-#:(^) => ["call \$powi",2],
+# :(^) => ["call \$powi",2],
 # ""=>["i32.load",1]
 # ""=>["i32.store",2]
 # ""=>["i32.const",1]
