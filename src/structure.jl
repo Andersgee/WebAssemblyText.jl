@@ -58,6 +58,7 @@ Restructure items for more straightforward translation.
 - .wat dont have Bool or Nothing types so iterating across zero does NOT work.. figure out a way to solve this
 """
 restructure(i::Integer, ssa::Array, item) = item
+restructure(i::Integer, ssa::Array, item::GotoNode) = Any[Expr(:(goto), item.label)]
 function restructure(i::Integer, ssa::Array, items::Array)
     if length(items) > 3 && hasname(items[1], keys(floatops))
         # expand Nary
@@ -85,6 +86,9 @@ function restructure(i::Integer, ssa::Array, items::Array)
                 return [head; iteratorargs; items[3]]
             end
         end
+    elseif hasname(items[1], :(gotoifnot))
+        target = items[3]
+        return [Expr(:(gotoif), target), ["i32.eqz"; items[2]]]
     else
         return restructure.((i,), (ssa,), items)
     end

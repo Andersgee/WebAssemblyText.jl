@@ -11,24 +11,24 @@ Get a wat single string from a an already translated ssa.
 - add block and loop control flow based on GotoNodes
 - Join.
 """
-function inline(ssa::Array)
+function stringify(ssa::Array)
+    ssa = [line for line in ssa if !isa(line,Nothing)]
+    return join(spacedjoin.(ssa), "\n")
+end
+
+function inlinessarefs(ssa::Array)
     usedrefs = []
     usedrefs!(usedrefs, ssa)
 
-    ssa = addparens.(ssa)
+    #ssa = addparens.(ssa)
     for (i, line) in enumerate(ssa)
         ssa[i] = replacerefs(ssa, line)
     end
     
     for i in usedrefs
-        ssa[i] = []
+        ssa[i] = [nothing]
     end
-    
-    ssa = insertblocks(ssa)
-    
-    clean_ssa = [line for line in ssa if !isa(line, Nothing) && length(line) > 0]
-
-    return join(spacedjoin.(clean_ssa), "\n")
+    return ssa
 end
 
 usedrefs!(refs::Array, item) = isa(item, SSAValue) ? push!(refs, item.id) : nothing
@@ -38,7 +38,7 @@ replacerefs(ssa::Array, item) = isa(item, SSAValue) ? ssa[item.id] : item
 replacerefs(ssa::Array, item::Array) = replacerefs.((ssa,), item)
 
 addparens(item) = item
-addparens(item::Array) = ["("; addparens.(item); ")"]
+addparens(item::Array) = isnothing(item) || length(item) == 1 ? item : ["("; addparens.(item); ")"]
 
 spacedjoin(item) = item
 spacedjoin(item::Array) = join(spacedjoin.(item), " ")

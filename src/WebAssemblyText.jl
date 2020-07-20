@@ -5,6 +5,11 @@ using Core.Compiler: GotoIfNot
 # Evalscope is a dummy module where all evaluated expressions live.
 module Evalscope end
 
+mutable struct BlockInfo
+    gotos::Dict{Int,Int}
+    parents::Array{Array{Int,1},1}
+end
+
 include("structure.jl")
 include("itemtype.jl")
 include("utils.jl")
