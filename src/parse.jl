@@ -14,12 +14,12 @@ function blockparse(str::String)
     argtypes = Dict()
     imports = Dict()
 
-    #fill in top level argtypes for function calls
+    # fill in top level argtypes for function calls
     for ex in block
         if ex.head == :(call)
             name = ex.args[1]
             args = ex.args[2:end]
-            #typeof(eval(arg)) instead of typeof(arg) allows top level call with rand() etc.
+            # typeof(eval(arg)) instead of typeof(arg) allows top level call with rand() etc.
             types = typeof.([Base.eval(Evalscope, arg) for arg in args])
             argtypes[name] = types
         end
@@ -60,9 +60,15 @@ function codeinfo(func, argtypes::Array)
     length(Rtype.parameters) > 1 && error("WebAssembly only allow functions to return a single number or nothing. function $func returns $Rtype")
 
     for (i, st) in enumerate(cinfo.slottypes)
+        # println("slottype: ", st)
+        # println("slotname: ", cinfo.slotnames[i])
+        # println("typeof(st): ", typeof(st))
         if isa(st, Union) # aka iterator variable
-            cinfo.slotnames[i] = Symbol("_$i")
+            # cinfo.slotnames[i] = Symbol("_$i")
             cinfo.slottypes[i] = getfield(st, 2).parameters[1]
+        end
+        if string(cinfo.slotnames[i]) == ""
+            cinfo.slotnames[i] = Symbol("_$i")
         end
     end
     
