@@ -12,7 +12,7 @@ Get a wat single string from a an already translated ssa.
 - Join.
 """
 function stringify(ssa::Array)
-    ssa = [line for line in ssa if !isa(line,Nothing)]
+    ssa = [line for line in ssa if !isnothing(line)]
     return join(spacedjoin.(ssa), "\n")
 end
 
@@ -20,7 +20,7 @@ function inlinessarefs(ssa::Array)
     usedrefs = []
     usedrefs!(usedrefs, ssa)
 
-    #ssa = addparens.(ssa)
+    # ssa = addparens.(ssa)
     for (i, line) in enumerate(ssa)
         ssa[i] = replacerefs(ssa, line)
     end

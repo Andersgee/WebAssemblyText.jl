@@ -43,20 +43,14 @@ end
 
 function inferblocks(gotos::Dict{Int,Int})
     parents = initialblocks(gotos)
-    println("parents before expand")
-    for (i, v) in enumerate(parents)
-        println(i, ": ", v)
-    end
     parents = expandblocks(parents)
-    println("parents after expand")
-    println.(parents)
     parents = mergeblocks(parents, gotos)
     return parents
 end
 
 function initialblocks(gotos::Dict{Int,Int})
     # lists of which block(s) each ssa index belong to
-    ssaparents = [Int[] for _ = 1:maximum(values(gotos))]
+    ssaparents = [Int[] for _ = 1:maximum(values(gotos)) + 1]
     for (origin, target) in gotos
         a, b = minmax(origin, target)
         for j = a:b
@@ -132,7 +126,6 @@ end
 
 function addblocks(bi::BlockInfo, wat::Array)
     # where and what blocks to insert into wat
-    push!(bi.parents, [])
     blocks = [[] for _ = 1:length(wat)]
     backtargets = values(filter(kv -> kv[2] < kv[1], bi.gotos)) # v<k means backjump (target less than origin)
     for (i, targets) in enumerate(bi.parents)
@@ -142,7 +135,7 @@ function addblocks(bi::BlockInfo, wat::Array)
             if prevmaxlevel < level || bi.parents[i - 1][level] != target
                 target in backtargets ? push!(blocks[i], "(loop") : push!(blocks[i], "(block")
             elseif nextmaxlevel < level || bi.parents[i + 1][level] != target
-                target in backtargets ? push!(blocks[i + 1], ")") : push!(blocks[i], ")") # loop end at end of line aka first at i+1
+                target in backtargets ? push!(blocks[i + 1], ")") : push!(blocks[i], ")") # loop end at end of line i aka first at i+1
             end
         end
     end

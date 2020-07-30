@@ -5,9 +5,16 @@ printssatypes(ssa,ci) = [println("$(ci.ssavaluetypes[i])\t%$i:  ", itemname(ssa[
 itemname(item) = isa(item, GlobalRef) ? item.name : item
 itemname(item::Array) = itemname.(item)
 
-function debugprint(ssa, ci)
+function debugprintssa(ssa, ci)
     println("\nDebug info:")
     printssatypes(ssa, ci)
     printslots(ci)
     println()
+end
+
+function debugprintblockinfo(binfo)
+    println("parent blocks:")
+    for (i, v) in enumerate(binfo.parents)
+        println(i, ": ", v)
+    end
 end

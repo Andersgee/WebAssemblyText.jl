@@ -23,7 +23,7 @@ function declaration(cinfo, func, argtypes, Rtype)
         rt = Rtype <: AbstractFloat ? "f32" : "i32"
         ret = "(result $rt)"
     end
-    return join([decl; ret; locals], " ")
+    return join([decl; ret; "\n"; locals], " ")
 end
 
 
@@ -38,7 +38,7 @@ translate(i::Integer, ci::CodeInfo, item::Number) = "(i32.const $item)"
 translate(i::Integer, ci::CodeInfo, item::Nothing) = "(i32.const 0)"
 translate(i::Integer, ci::CodeInfo, item::Bool) = item ? "(i32.const 1)" : "(i32.const 0)"
 translate(i::Integer, ci::CodeInfo, item::SlotNumber) = "(local.get \$$(ci.slotnames[item.id]))"
-translate(i::Integer, ci::CodeInfo, item::TypedSlot) = "(local.get \$$(ci.slotnames[item.id]))"
+# translate(i::Integer, ci::CodeInfo, item::TypedSlot) = "(local.get \$$(ci.slotnames[item.id]))"
 translate(i::Integer ,ci::CodeInfo, item::GlobalRef) = "call \$$(item.name)"
 translate(i::Integer ,ci::CodeInfo, item::NewvarNode) = nothing
 

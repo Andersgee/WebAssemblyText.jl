@@ -48,11 +48,9 @@ from a func such as sin, return a string like
 function jsimportentry(func, argtypes)
     Nparams = length(argtypes)
     
-    #looking at #https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math
-    #the Math object in js have the same function names as julia has, except for pow and random
-    #ofcourse many julia functions dont exist at all in js. but this atleast makes sure
-    #the ones that do can be imported correctly
-    if func == :(^)
+    # the global Math object in js have the same function names as julia has, except for pow and random
+    # ofcourse it may not exist in js, but this allows the ones that do to be imported with correct name
+    if func == :(^) 
         jsfunc = "pow"
     elseif func == :(rand)
         jsfunc = "random"
@@ -64,7 +62,7 @@ function jsimportentry(func, argtypes)
     jsval = " => Math.$(jsfunc)"
     paramnames = []
     for i = 1:Nparams
-        push!(paramnames, '`'+i) #unicode char, '`'+1 means a, '`'+2 means b
+        push!(paramnames, '`' + i) # unicode char, '`'+1 means a, '`'+2 means b
     end
     pn = join(["("; join(paramnames, ", "); ")"])
 
@@ -74,6 +72,8 @@ end
 
 imports!(imports::Dict, ci::CodeInfo, funcs::Dict, builtinfuncs::Dict, item) = nothing
 function imports!(imports::Dict, ci::CodeInfo, funcs::Dict, builtinfuncs::Dict, items::Array)
+    jsglobalMath = ["^","rand","acos","acosh","asin","asinh","atan","atanh","atan2","cbrt","cos","cosh","exp","expm1","hypot","imul","log","log1p","log10","log2","sign","sin","sinh","tan","tanh","trunc"]
+
     if isimport(funcs, builtinfuncs, items[1])
         func = items[1]
         argtypes = itemtype.((ci,), items[2:end])
@@ -108,34 +108,3 @@ function importdeclaration(func, argtypes, Rtype)
     decl = join(decl," ")
     return "($decl)"
 end
-
-#the functions available in js Math object (removed wasm builtins)
-#https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math
-jsglobalMath=[
-"^", #pow
-"rand",#random
-"acos",
-"acosh",
-"asin",
-"asinh",
-"atan",
-"atanh",
-"atan2",
-"cbrt",
-"cos",
-"cosh",
-"exp",
-"expm1",
-"hypot",
-"imul",
-"log",
-"log1p",
-"log10",
-"log2",
-"sign",
-"sin",
-"sinh",
-"tan",
-"tanh",
-"trunc",
-]

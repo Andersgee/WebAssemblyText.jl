@@ -60,18 +60,20 @@ function codeinfo(func, argtypes::Array)
     length(Rtype.parameters) > 1 && error("WebAssembly only allow functions to return a single number or nothing. function $func returns $Rtype")
 
     for (i, st) in enumerate(cinfo.slottypes)
-        # println("slottype: ", st)
-        # println("slotname: ", cinfo.slotnames[i])
-        # println("typeof(st): ", typeof(st))
         if isa(st, Union) # aka iterator variable
-            # cinfo.slotnames[i] = Symbol("_$i")
-            cinfo.slottypes[i] = getfield(st, 2).parameters[1]
+            # iterators are either nothing or state (which is a tuple of [value,index])
+            # so getfield 2 gets state types
+            cinfo.slottypes[i] = getfield(st, 2).parameters[1] # valtype
+            
+            # because we cant have tuples. use 2 locals for iterator variables
+            push!(cinfo.slotnames, Symbol("_$(i)i"))
+            push!(cinfo.slottypes, getfield(st, 2).parameters[2])
         end
         if string(cinfo.slotnames[i]) == ""
             cinfo.slotnames[i] = Symbol("_$i")
         end
     end
-    
+
     for (i, vt) in enumerate(cinfo.ssavaluetypes)
         if isa(vt, Compiler.Const)
             if typeof(vt.val) <: OrdinalRange

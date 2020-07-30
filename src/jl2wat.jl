@@ -86,12 +86,13 @@ function process(func, funcs, argtypes, imports; debuginfo::Bool=false)
     cinfo, Rtype = codeinfo(func, argtypes[func])
     ssa = structure(cinfo.code)
     ssa = [restructure(i, ssa, ssa[i]) for i = 1:length(ssa)]
-    debuginfo && display(cinfo)
-    debuginfo && debugprint(ssa, cinfo)
-    
     binfo = blockinfo(ssa)
-    ssa = inlinessarefs(ssa)
     
+    debuginfo && display(cinfo)
+    debuginfo && debugprintssa(ssa, cinfo)
+    debuginfo && debugprintblockinfo(binfo)
+    
+    ssa = inlinessarefs(ssa)
     wat = [translate(i, cinfo, ssa[i]) for i = 1:length(ssa)]
     wat = [translate_gotos(binfo, i, wat[i]) for i = 1:length(wat)]
     wat = addparens.(wat)
