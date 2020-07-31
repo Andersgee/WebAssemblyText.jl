@@ -1,20 +1,28 @@
 """
     structure(item::Expr)
 
-Expression as a vector: [head, args...]
+Format expression as a vector: [operator, operands...]
 
-# Detals:
-There are two expression flavors:
-- head in args[1]
-- head in head
+Another name could be listify
 
-make them be represented the same way
-
-- eval refs of constants
+# Details:
+- Expressions dont always have the operator in head, sometimes its in args[1] and head is just :call
+- pi et al are refs, so if eval(item) is a number just use the number instead of the ref
 """
+function structure(item::Expr)
+    if item.head == :(call)
+        head = item.args[1]
+        args = item.args[2:end]
+    else
+        head = item.head
+        args = item.args
+    end
+    return [head; structure(args)]
+end
+
 structure(item) = item
 structure(items::Array) = structure.(items)
-# structure(item::TypedSlot) = SlotNumber(item.id)
+structure(item::TypedSlot) = SlotNumber(item.id)
 
 function structure(item::GlobalRef)
     evaluatedref = Base.eval(Evalscope, item)
@@ -30,38 +38,22 @@ function structure(item::GlobalRef)
     end
 end
 
-function structure(item::Expr)
-    if item.head == :(call)
-        head = item.args[1]
-        args = item.args[2:end]
-    else
-        head = item.head
-        args = item.args
-    end
-    return [head; structure(args)]
-end
-
 """
     restructure(items)
 
 Restructure items for more straightforward translation.
 
 # Details:
-- expand n-ary representation ([mul,a,b,c,d] => [mul,d,[mul,c,[mul,a,b]]])
-- insert implied iterator increment ([:,1,4] => [:,1,1,4])
-- pick only initial iterator value if :(iterate) has a single arg [:(iterate),target] => ssa[target][1]
-- specify :(iteratef) instead of :(iterate) for float iteration.
-- put ifelse condition in last arg instead of first [ifselse, cond, a, b] => [select, a, b, cond]
-
-# TODO:
-- expand chains of comparisons [comparison, 1, <, i, <=, n] => [&&,[<,1,i],[<=,i,n]]
-- .wat dont have Bool or Nothing types so iterating across zero does NOT work.. figure out a way to solve this
+- expand N-ary representation ([mul,a,b,c,d] => [mul,d,[mul,c,[mul,a,b]]])
+- iterate: pick initial value if single arg
+- iterate: insert implied increment ([:,1,4] => [:,1,1,4])
+- rewrite ifelse as select [ifselse, cond, a, b] => [select, a, b, cond]
 """
 restructure(i::Integer, ssa::Array, item) = item
 restructure(i::Integer, ssa::Array, item::GotoNode) = Any[Expr(:(goto), item.label)]
 function restructure(i::Integer, ssa::Array, items::Array)
     if length(items) > 3 && hasname(items[1], keys(floatops))
-        # expand n-ary
+        # expand N-ary
         expanded = items[1:3]
         for i = 4:length(items)
             expanded = [items[1], items[i], expanded]
@@ -71,10 +63,10 @@ function restructure(i::Integer, ssa::Array, items::Array)
         # items[2] is a ssa ref, items[3] is fieldnumber
         # getfield will refer to a TypedSlot (tuple), but I saved it as a SlotNumber
         if items[3] == 1
-            return items[2] # the SlotNumber of the TypedSlot
+            return items[2]
         else
             id = ssa[items[2].id].id
-            name = "_$(id)i"
+            name = "_$(id)"
             return "(local.get \$$name)"
         end
         
@@ -83,18 +75,18 @@ function restructure(i::Integer, ssa::Array, items::Array)
     elseif hasname(items[1], :(:))
         return nothing
     elseif hasname(items[1], :(iterate))
-        println(i, " structure iterate: items:", items)
         target = items[2].id
         iteratorargs = ssa[target][2:end]
-        head = typeof(iteratorargs[1]) <: AbstractFloat ? GlobalRef(Evalscope, :(iteratef)) : GlobalRef(Evalscope, :(iterate))
+        head = GlobalRef(Evalscope, :(iterate))
         if length(items) == 2
-            return iteratorargs[1]
+            return [Symbol("iteratorbool"), iteratorargs[1]]
         else
             if length(iteratorargs) == 2
                 return [head; iteratorargs[1]; 1; iteratorargs[2]; items[3]] # a,b => a,1,b
             else
                 return [head; iteratorargs; items[3]]
             end
+
         end
     elseif hasname(items[1], :(gotoifnot))
         target = items[3]

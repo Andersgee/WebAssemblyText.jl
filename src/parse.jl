@@ -66,7 +66,7 @@ function codeinfo(func, argtypes::Array)
             cinfo.slottypes[i] = getfield(st, 2).parameters[1] # valtype
             
             # because we cant have tuples. use 2 locals for iterator variables
-            push!(cinfo.slotnames, Symbol("_$(i)i"))
+            push!(cinfo.slotnames, Symbol("_$(i)bool"))
             push!(cinfo.slottypes, getfield(st, 2).parameters[2])
         end
         if string(cinfo.slotnames[i]) == ""
@@ -74,17 +74,27 @@ function codeinfo(func, argtypes::Array)
         end
     end
 
+    
     for (i, vt) in enumerate(cinfo.ssavaluetypes)
-        if isa(vt, Compiler.Const)
+        if isa(vt, Union)
+            #cinfo.ssavaluetypes[i] = getfield(vt, 2).parameters[1]
+            #cinfo.ssavaluetypes[i] = getfield(vt, 2).parameters
+            cinfo.ssavaluetypes[i] = Tuple{Int, Int} #handle iterator variables as [index,notempty] instead of union ([value,index], nothing)
+        elseif isa(vt, Compiler.Const)
+            cinfo.ssavaluetypes[i] = typeof(vt.val)
+        elseif isa(vt, PartialStruct)
+            #println("PartialStruct: ",vt)
+            cinfo.ssavaluetypes[i] = getfield(vt,1)
+        #=
+        elseif isa(vt, Compiler.Const)
             if typeof(vt.val) <: OrdinalRange
                 cinfo.ssavaluetypes[i] = typeof(vt.val[1])
             else
                 cinfo.ssavaluetypes[i] = typeof(vt.val)
             end
-        elseif isa(vt, Union)
-            cinfo.ssavaluetypes[i] = getfield(vt, 2).parameters[1]
         elseif isa(vt, DataType) && length(vt.parameters) > 1
             cinfo.ssavaluetypes[i] = vt.parameters[1]
+        =#
         end
     end
 

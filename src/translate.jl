@@ -65,14 +65,31 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         return ["return"]
     elseif hasname(items[1], :(not_int))
         return ["i32.eqz", translate(i, ci, items[2])]
-    elseif hasname(items[1], :(===)) && typeof(items[3]) <: Nothing
-        if itemtype(ci, items[2]) <: AbstractFloat
-            return ["f32.eq", translate(i, ci, items[2]), "(f32.const 0.0)"]
+    elseif hasname(items[1], Symbol("==="))
+        if typeof(items[3]) <: Nothing
+            if itemtype(ci, items[2]) <: AbstractFloat
+                return ["f32.eq", translate(i, ci, items[2]), "(f32.const 0.0)"]
+            elseif isa(items[2],SlotNumber) #should prob check if items[2].id is a iteratorvariable
+                return ["i32.eqz", "(local.get \$$(ci.slotnames[items[2].id])bool)"] #the iterator bool
+            else
+                return ["i32.eqz", translate(i, ci, items[2])]
+            end
         else
-            return ["i32.eqz", translate(i, ci, items[2])]
+            #I think === is only used comparing with nothing so this else might never happen
+            return ["i32.eq", translate(i, ci, items[2:end])]
         end
     elseif hasname(items[1], :(=))
-        return ["local.set \$$(ci.slotnames[items[2].id])", translate(i, ci, items[3])]
+        slotname = ci.slotnames[items[2].id]
+        if isa(items[3],Array) && hasname(items[3][1], Symbol("iteratorbool"))
+            return ["local.set \$$(slotname) (local.set \$$(slotname)bool (i32.const 1))", translate(i, ci, items[3][2])]
+        else
+            if isa(items[3],Array) && hasname(items[3][1], :(iterate))
+                #builtin iterate returns a tuple so consume both
+                return ["local.set \$$(slotname) ( local.set \$$(slotname)bool ", translate(i, ci, items[3]), ")"]
+            else
+                return ["local.set \$$(slotname)", translate(i, ci, items[3])]
+            end
+        end
 
     # default individual translation
     else
@@ -127,7 +144,7 @@ intops = Dict(
 :(<<) => "i32.shl",
 :(>>) => "i32.shr_s",
 :(==) => "i32.eq",
-:(===) => "i32.eq",
+#:(===) => "i32.eq", #handle this in a special way.
 :(!=) => "i32.ne",
 :(<) => "i32.lt_s",
 :(>) => "i32.gt_s",
