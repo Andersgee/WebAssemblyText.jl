@@ -18,7 +18,7 @@ function getimports(imports::Dict)
     end
 
     if length(jsimports) > 0
-        println("INFO: There are assumed imports! Pass this as imports when instantiating WebAssembly from JavaScript:")
+        println("INFO: Suggested import object when instantiating WebAssembly from JavaScript:")
         println(jsimportsstring(jsimports))
         println()
     end
@@ -69,23 +69,24 @@ function jsimportentry(func, argtypes)
     return join([jskey,pn,jsval,pn])
 end
 
-
+isgenericfunction(func) = length(methods(Base.eval(Evalscope, func)).ms)>0
 imports!(imports::Dict, ci::CodeInfo, funcs::Dict, builtinfuncs::Dict, item) = nothing
 function imports!(imports::Dict, ci::CodeInfo, funcs::Dict, builtinfuncs::Dict, items::Array)
     jsglobalMath = ["^","rand","acos","acosh","asin","asinh","atan","atanh","atan2","cbrt","cos","cosh","exp","expm1","hypot","imul","log","log1p","log10","log2","sign","sin","sinh","tan","tanh","trunc"]
 
-    if isimport(funcs, builtinfuncs, items[1]) && !hasname(items[1],:(===))
+    if isimport(funcs, builtinfuncs, items[1])
         func = items[1]
-        println("trying to eval",func)
-        argtypes = itemtype.((ci,), items[2:end])
-        ct = code_typed(Base.eval(Evalscope, func), Tuple{argtypes...}; optimize=false, debuginfo=:none)[1]
-        cinfo = ct[1]
-        Rtype = ct[2]
-        println("after eval",func)
-        imports[func] = [importdeclaration(func.name, argtypes, Rtype), jsimportentry(func.name, argtypes)]
+        if isgenericfunction(func)
+            argtypes = itemtype.((ci,), items[2:end])
+            ct = code_typed(Base.eval(Evalscope, func), Tuple{argtypes...}; optimize=false, debuginfo=:none)[1]
+            cinfo = ct[1]
+            Rtype = ct[2]
+            imports[func] = [importdeclaration(func.name, argtypes, Rtype), jsimportentry(func.name, argtypes)]
 
-        if !(string(func.name) in jsglobalMath)
-            println("WARNING: function \"$(func.name)\" is not available in Math.$(func.name). Adjust recommended imports to call your own function.")
+            isavailableinjavascript = string(func.name) in jsglobalMath
+            if !isavailableinjavascript
+                println("INFO: JavaScript does not have Math.$(func.name). Import your own function instead or write it in julia.")
+            end
         end
     end
     imports!.((imports,), (ci,), (funcs,), (builtinfuncs,), items)
