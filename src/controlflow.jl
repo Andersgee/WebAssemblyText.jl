@@ -21,7 +21,11 @@ So the strategy is to infer a blocktree from arbitrary gotos, insert blocks and 
 """
 function blockinfo(ssa::Array)
     gotos = getgotos(ssa)
-    parents = inferblocks(gotos)
+    if isempty(gotos)
+        parents = [Int[] for _ = 1:length(ssa)]
+    else
+        parents = inferblocks(gotos)
+    end
     return BlockInfo(gotos, parents)
 end
 
