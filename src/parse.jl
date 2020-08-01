@@ -57,7 +57,9 @@ function codeinfo(func, argtypes::Array)
     ct = code_typed(Base.eval(Evalscope, func), Tuple{argtypes...}; optimize=false, debuginfo=:none)[1] # none, source
     cinfo = ct[1]
     Rtype = ct[2]
-    length(Rtype.parameters) > 1 && error("WebAssembly only allow functions to return a single number or nothing. function $func returns $Rtype")
+
+    # wasm can now return multiple values. NICE!
+    # length(Rtype.parameters) > 1 && error("WebAssembly only allow functions to return a single number or nothing. function $func returns $Rtype")
 
     for (i, st) in enumerate(cinfo.slottypes)
         if isa(st, Union) # aka iterator variable
@@ -77,15 +79,15 @@ function codeinfo(func, argtypes::Array)
     
     for (i, vt) in enumerate(cinfo.ssavaluetypes)
         if isa(vt, Union)
-            #cinfo.ssavaluetypes[i] = getfield(vt, 2).parameters[1]
-            #cinfo.ssavaluetypes[i] = getfield(vt, 2).parameters
-            cinfo.ssavaluetypes[i] = Tuple{Int, Int} #handle iterator variables as [index,notempty] instead of union ([value,index], nothing)
+            # cinfo.ssavaluetypes[i] = getfield(vt, 2).parameters[1]
+            # cinfo.ssavaluetypes[i] = getfield(vt, 2).parameters
+            cinfo.ssavaluetypes[i] = Tuple{Int,Int} # handle iterator variables as [index,notempty] instead of union ([value,index], nothing)
         elseif isa(vt, Compiler.Const)
             cinfo.ssavaluetypes[i] = typeof(vt.val)
         elseif isa(vt, PartialStruct)
-            #println("PartialStruct: ",vt)
-            cinfo.ssavaluetypes[i] = getfield(vt,1)
-        #=
+            # println("PartialStruct: ",vt)
+            cinfo.ssavaluetypes[i] = getfield(vt, 1)
+        #= 
         elseif isa(vt, Compiler.Const)
             if typeof(vt.val) <: OrdinalRange
                 cinfo.ssavaluetypes[i] = typeof(vt.val[1])
@@ -93,8 +95,7 @@ function codeinfo(func, argtypes::Array)
                 cinfo.ssavaluetypes[i] = typeof(vt.val)
             end
         elseif isa(vt, DataType) && length(vt.parameters) > 1
-            cinfo.ssavaluetypes[i] = vt.parameters[1]
-        =#
+            cinfo.ssavaluetypes[i] = vt.parameters[1] =#
         end
     end
 

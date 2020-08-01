@@ -59,9 +59,16 @@ function restructure(i::Integer, ssa::Array, items::Array)
             expanded = [items[1], items[i], expanded]
         end
         return expanded
+    
     elseif hasname(items[1], :(getfield))
+        ssaindex = items[2].id
+        fieldnumber = items[3]
+        # getfield will refer to an iterator tuple
         # items[2] is a ssa ref, items[3] is fieldnumber
-        # getfield will refer to a TypedSlot (tuple), but I saved it as a SlotNumber
+        # with 1 meaning "get value"
+        # and 2 meaning "increment index"
+        # return ssa[items[2].id][fieldnumber]
+        
         if items[3] == 1
             return items[2]
         else
@@ -69,7 +76,7 @@ function restructure(i::Integer, ssa::Array, items::Array)
             name = "_$(id)"
             return "(local.get \$$name)"
         end
-        
+      
     elseif hasname(items[1], :(ifelse))
         return [items[1],items[3],items[4],items[2]]
     elseif hasname(items[1], :(:))

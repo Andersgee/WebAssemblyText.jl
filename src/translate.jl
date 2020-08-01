@@ -18,11 +18,29 @@ function declaration(cinfo, func, argtypes, Rtype)
             push!(locals, "(local \$$(slotnames[i]) $(slottypes[i]))")
         end
     end
-    ret = ""
-    if !(Rtype <: Nothing)
-        rt = Rtype <: AbstractFloat ? "f32" : "i32"
-        ret = "(result $rt)"
+
+    ret = [] 
+    if length(Rtype.parameters) > 0
+        isarray = Rtype == Array{Float64,1}
+        if isarray
+            push!(ret, "(result i32)")
+        else
+            # DataType Tuple
+            for rtype in Rtype.parameters
+                if !(rtype <: Nothing)
+                    rt = rtype <: AbstractFloat ? "f32" : "i32"
+                    push!(ret, "(result $rt)")
+                end
+            end
+        end
+    else
+        # DataType 
+        if !(Rtype <: Nothing)
+            rt = Rtype <: AbstractFloat ? "f32" : "i32"
+            push!(ret, "(result $rt)")
+        end
     end
+    
     return join([decl; ret; "\n"; locals], " ")
 end
 
@@ -59,6 +77,10 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         return ["$(intops[items[1].name])"; translate(i, ci, items[2:end])]
     
     # special expression?
+    # elseif hasname(items[1], :(tuple))
+    #    println("translate tuple here")
+    #    return translate.((i,), (ci,), items[2:end])
+        
     elseif hasname(items[1], :(ifelse))
         return ["select"; translate(i, ci, items[2:end])]
     elseif hasname(items[1], Symbol("return")) && hasname(items[2], Symbol("nothing"))
@@ -69,22 +91,22 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         if typeof(items[3]) <: Nothing
             if itemtype(ci, items[2]) <: AbstractFloat
                 return ["f32.eq", translate(i, ci, items[2]), "(f32.const 0.0)"]
-            elseif isa(items[2],SlotNumber) #should prob check if items[2].id is a iteratorvariable
-                return ["i32.eqz", "(local.get \$$(ci.slotnames[items[2].id])bool)"] #the iterator bool
+            elseif isa(items[2], SlotNumber) # should prob check if items[2].id is a iteratorvariable
+                return ["i32.eqz", "(local.get \$$(ci.slotnames[items[2].id])bool)"] # the iterator bool
             else
                 return ["i32.eqz", translate(i, ci, items[2])]
             end
         else
-            #I think === is only used comparing with nothing so this else might never happen
+            # I think === is only used comparing with nothing so this else might never happen
             return ["i32.eq", translate(i, ci, items[2:end])]
         end
     elseif hasname(items[1], :(=))
         slotname = ci.slotnames[items[2].id]
-        if isa(items[3],Array) && hasname(items[3][1], Symbol("iteratorbool"))
+        if isa(items[3], Array) && hasname(items[3][1], Symbol("iteratorbool"))
             return ["local.set \$$(slotname) (local.set \$$(slotname)bool (i32.const 1))", translate(i, ci, items[3][2])]
         else
-            if isa(items[3],Array) && hasname(items[3][1], :(iterate))
-                #builtin iterate returns a tuple so consume both
+            if isa(items[3], Array) && hasname(items[3][1], :(iterate))
+                # builtin iterate returns a tuple so consume both
                 return ["local.set \$$(slotname) ( local.set \$$(slotname)bool ", translate(i, ci, items[3]), ")"]
             else
                 return ["local.set \$$(slotname)", translate(i, ci, items[3])]
@@ -144,7 +166,7 @@ intops = Dict(
 :(<<) => "i32.shl",
 :(>>) => "i32.shr_s",
 :(==) => "i32.eq",
-#:(===) => "i32.eq", #handle this in a special way.
+# :(===) => "i32.eq", #handle this in a special way.
 :(!=) => "i32.ne",
 :(<) => "i32.lt_s",
 :(>) => "i32.gt_s",

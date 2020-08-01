@@ -38,7 +38,15 @@ replacerefs(ssa::Array, item) = isa(item, SSAValue) ? ssa[item.id] : item
 replacerefs(ssa::Array, item::Array) = replacerefs.((ssa,), item)
 
 addparens(item) = item
-addparens(item::Array) = isnothing(item) || length(item) == 1 ? item : ["("; addparens.(item); ")"]
+function addparens(items::Array)
+    if isnothing(items) || length(items) == 1
+        return items
+    elseif items[1] == "call \$tuple"
+        return addparens.(items[2:end])
+    else
+        return ["("; addparens.(items); ")"]
+    end
+end
 
 spacedjoin(item) = item
 spacedjoin(item::Array) = join(spacedjoin.(item), " ")
