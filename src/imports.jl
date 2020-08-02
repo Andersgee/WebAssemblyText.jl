@@ -62,14 +62,16 @@ function jsimportentry(func, argtypes)
     jsval = " => Math.$(jsfunc)"
     paramnames = []
     for i = 1:Nparams
-        push!(paramnames, '`' + i) # unicode char, '`'+1 means a, '`'+2 means b
+        push!(paramnames, index2abc(i))
     end
     pn = join(["("; join(paramnames, ", "); ")"])
 
     return join([jskey,pn,jsval,pn])
 end
 
-isgenericfunction(func) = length(methods(Base.eval(Evalscope, func)).ms)>0
+index2abc(i) = '`' + i # unicode char, '`'+1 means a, '`'+2 means b
+
+isgenericfunction(func) = length(methods(Base.eval(Evalscope, func)).ms) > 0
 imports!(imports::Dict, ci::CodeInfo, funcs::Dict, builtinfuncs::Dict, item) = nothing
 function imports!(imports::Dict, ci::CodeInfo, funcs::Dict, builtinfuncs::Dict, items::Array)
     jsglobalMath = ["^","rand","acos","acosh","asin","asinh","atan","atanh","atan2","cbrt","cos","cosh","exp","expm1","hypot","imul","log","log1p","log10","log2","sign","sin","sinh","tan","tanh","trunc"]
