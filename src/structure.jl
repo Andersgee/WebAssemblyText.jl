@@ -61,14 +61,12 @@ function restructure(ci::CodeInfo, i::Integer, ssa::Array, items::Array)
         return expanded
     
     elseif hasname(items[1], :(getfield))
-        println("getfield items:", items)
-        println("getfield ssa[items[2].id]:", ssa[items[2].id])
-        
         # getfield will refer to an iterator tuple
         id = ssa[items[2].id].id
         fieldnumber = items[3]
         name = fieldnumber == 1 ? "_$(id)" : "_$(id)i" # get value or index
-        return "(local.get \$$name)" 
+        return "(local.get \$$name)"
+        
     elseif hasname(items[1], :(iterate))
         return specializediterate(ci, i, ssa, items)
 
@@ -99,23 +97,32 @@ function specializediterate(ci, i, ssa, items)
         else
             return [GlobalRef(Evalscope, :(iteratearray)); ssaref; items[3]]
         end
+    # for range functions, pass iteratorvalue instead of iteratorindex as iteratorindex
     elseif iteratortype <: UnitRange
         if length(items) == 2
             return [GlobalRef(Evalscope, :(iterateunitrange_init)); iterator[2:end]]
         else
-            return [GlobalRef(Evalscope, :(iterateunitrange)); iterator[2:end]; items[3]]
+            # return [GlobalRef(Evalscope, :(iterateunitrange)); iterator[2:end]; items[3]]
+            id = ssa[ssa[items[3].id][2].id].id # walk along some refs to find which slotname it is
+            iteratorval = "(local.get _$(id))"
+            return [GlobalRef(Evalscope, :(iterateunitrange)); iterator[2:end]; iteratorval]
         end
     elseif iteratortype <: StepRange
         if length(items) == 2
             return [GlobalRef(Evalscope, :(iteratesteprange_init)); iterator[2:end]]
         else
-            return [GlobalRef(Evalscope, :(iteratesteprange)); iterator[2:end]; items[3]]
+            # return [GlobalRef(Evalscope, :(iteratesteprange)); iterator[2:end]; items[3]]
+            id = ssa[ssa[items[3].id][2].id].id
+            iteratorval = "(local.get _$(id))"
+            return [GlobalRef(Evalscope, :(iteratesteprange)); iterator[2:end]; iteratorval]
         end
     elseif iteratortype <: StepRangeLen
         if length(items) == 2
             return [GlobalRef(Evalscope, :(iteratesteprangelen_init)); iterator[2:end]]
         else
-            return [GlobalRef(Evalscope, :(iteratesteprangelen)); iterator[2:end]; items[3]]
+            id = ssa[ssa[items[3].id][2].id].id
+            iteratorval = "(local.get _$(id))"
+            return [GlobalRef(Evalscope, :(iteratesteprangelen)); iterator[2:end]; iteratorval]
         end
     else
         if length(items) == 2
