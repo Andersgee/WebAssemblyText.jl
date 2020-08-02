@@ -149,6 +149,9 @@ function addblocks(bi::BlockInfo, wat::Array)
         length(v) < 1 && continue
         if isnothing(wat[i])
             wat[i] = [spacedjoin(v)]
+        elseif isa(wat[i], TypedSlot)
+            # wat[i] = [v,wat[i]]
+            wat[i] = spacedjoin(v)
         else
             pushfirst!(wat[i], spacedjoin(v))
         end

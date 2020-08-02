@@ -53,12 +53,20 @@ Get a wat string from item, specialized on item type.
 translate(i::Integer, ci::CodeInfo, item) = item
 translate(i::Integer, ci::CodeInfo, item::AbstractFloat) = "(f32.const $item)"
 translate(i::Integer, ci::CodeInfo, item::Number) = "(i32.const $item)"
-translate(i::Integer, ci::CodeInfo, item::Nothing) = "(i32.const 0)"
+# translate(i::Integer, ci::CodeInfo, item::Nothing) = "(i32.const 0)"
 translate(i::Integer, ci::CodeInfo, item::Bool) = item ? "(i32.const 1)" : "(i32.const 0)"
 translate(i::Integer, ci::CodeInfo, item::SlotNumber) = "(local.get \$$(ci.slotnames[item.id]))"
-# translate(i::Integer, ci::CodeInfo, item::TypedSlot) = "(local.get \$$(ci.slotnames[item.id]))"
 translate(i::Integer ,ci::CodeInfo, item::GlobalRef) = "call \$$(item.name)"
 translate(i::Integer ,ci::CodeInfo, item::NewvarNode) = nothing
+translate(i::Integer, ci::CodeInfo, item::Compiler.Const) = translate(i, ci, item.val)
+function translate(i::Integer, ci::CodeInfo, item::TypedSlot)
+    if isa(item.typ, Compiler.Const)
+        return translate(i, ci, item.typ.val[1])
+    else
+        return item
+    end
+end
+
 
 """
     translate(ci::CodeInfo, items::Array)
@@ -77,10 +85,6 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         return ["$(intops[items[1].name])"; translate(i, ci, items[2:end])]
     
     # special expression?
-    # elseif hasname(items[1], :(tuple))
-    #    println("translate tuple here")
-    #    return translate.((i,), (ci,), items[2:end])
-        
     elseif hasname(items[1], :(ifelse))
         return ["select"; translate(i, ci, items[2:end])]
     elseif hasname(items[1], Symbol("return")) && hasname(items[2], Symbol("nothing"))
@@ -89,36 +93,34 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         return ["i32.eqz", translate(i, ci, items[2])]
     elseif hasname(items[1], Symbol("==="))
         if typeof(items[3]) <: Nothing
-            if itemtype(ci, items[2]) <: AbstractFloat
+            if isa(items[2], SlotNumber) && string(ci.slotnames[items[2].id])[1] == '_' # iterator variable begins with "_"
+                return ["i32.eqz", "(local.get \$$(ci.slotnames[items[2].id])i)"] # the iteratorindex
+            elseif itemtype(ci, items[2]) <: AbstractFloat
                 return ["f32.eq", translate(i, ci, items[2]), "(f32.const 0.0)"]
-            elseif isa(items[2], SlotNumber) # should prob check if items[2].id is a iteratorvariable
-                return ["i32.eqz", "(local.get \$$(ci.slotnames[items[2].id])bool)"] # the iterator bool
             else
                 return ["i32.eqz", translate(i, ci, items[2])]
             end
         else
-            # I think === is only used comparing with nothing so this else might never happen
-            return ["i32.eq", translate(i, ci, items[2:end])]
+            return ["i32.eq", translate(i, ci, items[2:3])]
         end
+    # elseif hasname(items[1], :(=))
+    #    slotname = ci.slotnames[items[2].id]
+    #    return ["local.set \$$(slotname)", translate(i, ci, items[3])]
+    
     elseif hasname(items[1], :(=))
         slotname = ci.slotnames[items[2].id]
-        if isa(items[3], Array) && hasname(items[3][1], Symbol("iteratorbool"))
-            return ["local.set \$$(slotname) (local.set \$$(slotname)bool (i32.const 1))", translate(i, ci, items[3][2])]
+        if isa(items[3], Array) && is_iterate(items[3][1])
+            return ["local.set \$$(slotname) ( local.set \$$(slotname)i", translate(i, ci, items[3]), ")"]
         else
-            if isa(items[3], Array) && hasname(items[3][1], :(iterate))
-                # builtin iterate returns a tuple so consume both
-                return ["local.set \$$(slotname) ( local.set \$$(slotname)bool ", translate(i, ci, items[3]), ")"]
-            else
-                return ["local.set \$$(slotname)", translate(i, ci, items[3])]
-            end
+            return ["local.set \$$(slotname)", translate(i, ci, items[3])]
         end
-
     # default individual translation
     else
         return translate.((i,), (ci,), items)
     end
 end
 
+is_iterate(item) = isa(item, GlobalRef) && length(string(item.name)) >= 7 && string(item.name)[1:7] == "iterate"
 is_floatop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && items[1].name in keys(floatops) && (hasitemtype(ci, items[2], AbstractFloat) || (length(items) > 2 && hasitemtype(ci, items[3], AbstractFloat)))
 is_intop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && items[1].name in keys(intops) && (hasitemtype(ci, items[2], [Integer, Bool, Nothing]) || (length(items) > 2 && hasitemtype(ci, items[3], [Integer, Bool, Nothing])))
 

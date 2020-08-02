@@ -41,8 +41,6 @@ addparens(item) = item
 function addparens(items::Array)
     if isnothing(items) || length(items) == 1
         return items
-    elseif items[1] == "call \$tuple"
-        return addparens.(items[2:end])
     else
         return ["("; addparens.(items); ")"]
     end

@@ -85,11 +85,15 @@ The main steps of translating a single function
 function process(func, funcs, argtypes, imports; debuginfo::Bool=false)
     cinfo, Rtype = codeinfo(func, argtypes[func])
     ssa = structure(cinfo.code)
-    ssa = [restructure(i, ssa, ssa[i]) for i = 1:length(ssa)]
+    
+    # debuginfo && debugprint(ssa, cinfo, binfo)
+    
+    ssa = [restructure(cinfo, i, ssa, ssa[i]) for i = 1:length(ssa)]
     binfo = blockinfo(ssa)
-
+    
     debuginfo && debugprint(ssa, cinfo, binfo)
-
+    
+    
     argtypes!(cinfo, argtypes, funcs, ssa)
     imports!(imports, cinfo, funcs, builtinfuncs, ssa)
     

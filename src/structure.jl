@@ -1,14 +1,20 @@
 """
-    structure(item::Expr)
+    structure(items)
 
-Format expression as a vector: [operator, operands...]
+Recursively format expressions as lists: [operator, operands...]
 
-Another name could be listify
+# Notes:
+list trees (aka S-expressions) are convenient to work with because modifying it with a recursive function is easy.
+Also, WebAssembly supports text format written in S-expressions so if all required functionality like
+overloading, phinodes and such was built into WebAssembly one could essentially do a one liner:
+webassemblytext = translate(structure(code_typed(somejuliafunction))
 
 # Details:
 - Expressions dont always have the operator in head, sometimes its in args[1] and head is just :call
 - pi et al are refs, so if eval(item) is a number just use the number instead of the ref
 """
+structure(items::Array) = structure.(items)
+structure(item) = item
 function structure(item::Expr)
     if item.head == :(call)
         head = item.args[1]
@@ -20,13 +26,9 @@ function structure(item::Expr)
     return [head; structure(args)]
 end
 
-structure(item) = item
-structure(items::Array) = structure.(items)
-structure(item::TypedSlot) = SlotNumber(item.id)
-
 function structure(item::GlobalRef)
     evaluatedref = Base.eval(Evalscope, item)
-    # evaulate refs to constants into constants, also turn π, ℯ, γ, φ and catalan to float rather than irrational
+    # evaulate refs to constants into constants, also turn π, ℯ et al. to float rather than irrational
     if typeof(evaluatedref) <: Number
         if typeof(evaluatedref) <: AbstractFloat || typeof(evaluatedref) <: Irrational
             return AbstractFloat(evaluatedref)
@@ -49,9 +51,9 @@ Restructure items for more straightforward translation.
 - iterate: insert implied increment ([:,1,4] => [:,1,1,4])
 - rewrite ifelse as select [ifselse, cond, a, b] => [select, a, b, cond]
 """
-restructure(i::Integer, ssa::Array, item) = item
-restructure(i::Integer, ssa::Array, item::GotoNode) = Any[Expr(:(goto), item.label)]
-function restructure(i::Integer, ssa::Array, items::Array)
+restructure(ci::CodeInfo, i::Integer, ssa::Array, item) = item
+restructure(ci::CodeInfo, i::Integer, ssa::Array, item::GotoNode) = Any[Expr(:(goto), item.label)]
+function restructure(ci::CodeInfo, i::Integer, ssa::Array, items::Array)
     if length(items) > 3 && hasname(items[1], keys(floatops))
         # expand N-ary
         expanded = items[1:3]
@@ -61,46 +63,64 @@ function restructure(i::Integer, ssa::Array, items::Array)
         return expanded
     
     elseif hasname(items[1], :(getfield))
-        ssaindex = items[2].id
-        fieldnumber = items[3]
         # getfield will refer to an iterator tuple
-        # items[2] is a ssa ref, items[3] is fieldnumber
-        # with 1 meaning "get value"
-        # and 2 meaning "increment index"
-        # return ssa[items[2].id][fieldnumber]
-        
-        if items[3] == 1
-            return items[2]
-        else
-            id = ssa[items[2].id].id
-            name = "_$(id)"
-            return "(local.get \$$name)"
-        end
-      
+        id = ssa[items[2].id].id
+        fieldnumber = items[3]
+        name = fieldnumber == 1 ? "_$(id)" : "_$(id)i" # get value or index
+        return "(local.get \$$name)" 
+    elseif hasname(items[1], :(iterate))
+        return specializediterate(ci, i, ssa, items)
+
     elseif hasname(items[1], :(ifelse))
         return [items[1],items[3],items[4],items[2]]
     elseif hasname(items[1], :(:))
+        # return items[2:end]
         return nothing
-    elseif hasname(items[1], :(iterate))
-        target = items[2].id
-        iteratorargs = ssa[target][2:end]
-        head = GlobalRef(Evalscope, :(iterate))
-        if length(items) == 2
-            return [Symbol("iteratorbool"), iteratorargs[1]]
-        else
-            if length(iteratorargs) == 2
-                return [head; iteratorargs[1]; 1; iteratorargs[2]; items[3]] # a,b => a,1,b
-            else
-                return [head; iteratorargs; items[3]]
-            end
-
-        end
     elseif hasname(items[1], :(gotoifnot))
         target = items[3]
         return [Expr(:(gotoif), target), ["i32.eqz"; items[2]]]
     else
-        return restructure.((i,), (ssa,), items)
+        return restructure.((ci,), (i,), (ssa,), items)
     end
 end
 
 
+function specializediterate(ci, i, ssa, items)
+    # single arg => initial value, initial index
+    # two args => next value, next index
+    ssaref = items[2]
+    target = items[2].id
+    iterator = ssa[target]
+    iteratortype = ci.ssavaluetypes[target]
+    if iteratortype <: Array
+        if length(items) == 2
+            return [GlobalRef(Evalscope, :(iteratearray_init)); ssaref]
+        else
+            return [GlobalRef(Evalscope, :(iteratearray)); ssaref; items[3]]
+        end
+    elseif iteratortype <: UnitRange
+        if length(items) == 2
+            return [GlobalRef(Evalscope, :(iterateunitrange_init)); iterator[2:end]]
+        else
+            return [GlobalRef(Evalscope, :(iterateunitrange)); iterator[2:end]; items[3]]
+        end
+    elseif iteratortype <: StepRange
+        if length(items) == 2
+            return [GlobalRef(Evalscope, :(iteratesteprange_init)); iterator[2:end]]
+        else
+            return [GlobalRef(Evalscope, :(iteratesteprange)); iterator[2:end]; items[3]]
+        end
+    elseif iteratortype <: StepRangeLen
+        if length(items) == 2
+            return [GlobalRef(Evalscope, :(iteratesteprangelen_init)); iterator[2:end]]
+        else
+            return [GlobalRef(Evalscope, :(iteratesteprangelen)); iterator[2:end]; items[3]]
+        end
+    else
+        if length(items) == 2
+            return [GlobalRef(Evalscope, :(iteratecollection_init)); ssaref]
+        else
+            return [GlobalRef(Evalscope, :(iteratecollection)); ssaref; items[3]]
+        end
+    end
+end

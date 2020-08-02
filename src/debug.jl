@@ -13,7 +13,7 @@ itemname(item::Array) = itemname.(item)
 function debugprintssa(ssa, ci)
     println("\nSlots:")
     printslots(ci)
-    println("\nSSA (restructured):")
+    println("\nSSA:")
     printssatypes(ssa, ci)
     println()
 end
@@ -21,7 +21,7 @@ end
 function debugprintblockinfo(binfo)
     println("Inferred blocktree (parents of each ssa index):")
     for (i, v) in enumerate(binfo.parents)
-        if length(v)>0
+        if length(v) > 0
             println(i, ": ", v)
         else
             println(i, ": ")

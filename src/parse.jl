@@ -61,14 +61,16 @@ function codeinfo(func, argtypes::Array)
     # wasm can now return multiple values. NICE!
     # length(Rtype.parameters) > 1 && error("WebAssembly only allow functions to return a single number or nothing. function $func returns $Rtype")
 
+    
     for (i, st) in enumerate(cinfo.slottypes)
         if isa(st, Union) # aka iterator variable
             # iterators are either nothing or state (which is a tuple of [value,index])
             # so getfield 2 gets state types
             cinfo.slottypes[i] = getfield(st, 2).parameters[1] # valtype
-            
+            # cinfo.slottypes[i] = Tuple{getfield(st, 2).parameters...}
+
             # because we cant have tuples. use 2 locals for iterator variables
-            push!(cinfo.slotnames, Symbol("_$(i)bool"))
+            push!(cinfo.slotnames, Symbol("_$(i)i"))
             push!(cinfo.slottypes, getfield(st, 2).parameters[2])
         end
         if string(cinfo.slotnames[i]) == ""
@@ -81,12 +83,14 @@ function codeinfo(func, argtypes::Array)
         if isa(vt, Union)
             # cinfo.ssavaluetypes[i] = getfield(vt, 2).parameters[1]
             # cinfo.ssavaluetypes[i] = getfield(vt, 2).parameters
-            cinfo.ssavaluetypes[i] = Tuple{Int,Int} # handle iterator variables as [index,notempty] instead of union ([value,index], nothing)
+            # cinfo.ssavaluetypes[i] = Tuple{Int,Int} # handle iterator variables as [index,notempty] instead of union ([value,index], nothing)
+            
+            cinfo.ssavaluetypes[i] = Tuple{getfield(vt, 2).parameters...}
         elseif isa(vt, Compiler.Const)
             cinfo.ssavaluetypes[i] = typeof(vt.val)
-        elseif isa(vt, PartialStruct)
-            # println("PartialStruct: ",vt)
-            cinfo.ssavaluetypes[i] = getfield(vt, 1)
+        # elseif isa(vt, PartialStruct)
+        #    # println("PartialStruct: ",vt)
+        #    cinfo.ssavaluetypes[i] = getfield(vt, 1)
         #= 
         elseif isa(vt, Compiler.Const)
             if typeof(vt.val) <: OrdinalRange
@@ -98,6 +102,5 @@ function codeinfo(func, argtypes::Array)
             cinfo.ssavaluetypes[i] = vt.parameters[1] =#
         end
     end
-
     return cinfo, Rtype
 end
