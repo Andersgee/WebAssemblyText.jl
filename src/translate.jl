@@ -87,8 +87,14 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
     # special expression?
     elseif hasname(items[1], :(ifelse))
         return ["select"; translate(i, ci, items[2:end])]
-    elseif hasname(items[1], Symbol("return")) && hasname(items[2], Symbol("nothing"))
-        return ["return"]
+    elseif hasname(items[1], Symbol("return"))
+        if hasname(items[2], Symbol("nothing"))
+            return ["return"]
+        elseif isa(items[2], Array) && hasname(items[2][1], :(tuple))
+            return ["return"; translate(i, ci, items[2][2:end])]
+        else 
+            return ["return"; translate(i, ci, items[2:end])]
+        end
     elseif hasname(items[1], :(not_int))
         return ["i32.eqz", translate(i, ci, items[2])]
     elseif hasname(items[1], Symbol("==="))

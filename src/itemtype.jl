@@ -13,8 +13,14 @@ itemtype(ci::CodeInfo, item::Compiler.Const) = itemtype(ci, item.val)
 
 hasitemtype(ci::CodeInfo, item, type::DataType) = itemtype(ci, item) <: type
 hasitemtype(ci::CodeInfo, item, types::Array{DataType,1}) = any([itemtype(ci, item) <: type for type in types])
-hasitemtype(ci::CodeInfo, items::Array, type::DataType) = any([itemtype(ci, item) <: type for item in items])
-
+function hasitemtype(ci::CodeInfo, items::Array, type::DataType)
+    if hasname(items[1], :(getindex)) && isa(items[2], SlotNumber)
+        datatype = ci.slottypes[items[2].id]
+        return datatype.parameters[1] <: type
+    else
+        return any([itemtype(ci, item) <: type for item in items])
+    end
+end
 """
     argtypes!(ci::CodeInfo, argtypes::Dict, funcs::Dict, items::Array)
 

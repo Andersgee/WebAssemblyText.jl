@@ -47,8 +47,6 @@ Restructure items for more straightforward translation.
 
 # Details:
 - expand N-ary representation ([mul,a,b,c,d] => [mul,d,[mul,c,[mul,a,b]]])
-- iterate: pick initial value if single arg
-- iterate: insert implied increment ([:,1,4] => [:,1,1,4])
 - rewrite ifelse as select [ifselse, cond, a, b] => [select, a, b, cond]
 """
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item) = item
@@ -63,6 +61,9 @@ function restructure(ci::CodeInfo, i::Integer, ssa::Array, items::Array)
         return expanded
     
     elseif hasname(items[1], :(getfield))
+        println("getfield items:", items)
+        println("getfield ssa[items[2].id]:", ssa[items[2].id])
+        
         # getfield will refer to an iterator tuple
         id = ssa[items[2].id].id
         fieldnumber = items[3]
