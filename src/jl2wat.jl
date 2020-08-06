@@ -115,7 +115,7 @@ end
 Macro for translating a single function by referencing the function rather than the source code of the function.
 (functions called will be put as imports rather than translated)
 
-# Example:
+# Examples
 
 ```julia
 julia> hello(x) = 3.1*x

@@ -104,7 +104,7 @@ function specializediterate(ci, i, ssa, items)
         else
             # return [GlobalRef(Evalscope, :(iterateunitrange)); iterator[2:end]; items[3]]
             id = ssa[ssa[items[3].id][2].id].id # walk along some refs to find which slotname it is
-            iteratorval = "(local.get _$(id))"
+            iteratorval = "(local.get \$_$(id))"
             return [GlobalRef(Evalscope, :(iterateunitrange)); iterator[2:end]; iteratorval]
         end
     elseif iteratortype <: StepRange
@@ -113,7 +113,7 @@ function specializediterate(ci, i, ssa, items)
         else
             # return [GlobalRef(Evalscope, :(iteratesteprange)); iterator[2:end]; items[3]]
             id = ssa[ssa[items[3].id][2].id].id
-            iteratorval = "(local.get _$(id))"
+            iteratorval = "(local.get \$_$(id))"
             return [GlobalRef(Evalscope, :(iteratesteprange)); iterator[2:end]; iteratorval]
         end
     elseif iteratortype <: StepRangeLen
@@ -121,7 +121,7 @@ function specializediterate(ci, i, ssa, items)
             return [GlobalRef(Evalscope, :(iteratesteprangelen_init)); iterator[2:end]]
         else
             id = ssa[ssa[items[3].id][2].id].id
-            iteratorval = "(local.get _$(id))"
+            iteratorval = "(local.get \$_$(id))"
             return [GlobalRef(Evalscope, :(iteratesteprangelen)); iterator[2:end]; iteratorval]
         end
     else

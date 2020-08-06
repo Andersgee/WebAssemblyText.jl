@@ -32,7 +32,13 @@ pruneLineNumberNode(item) = item
 pruneLineNumberNode(items::Array) = [pruneLineNumberNode(item) for item in items if !isa(item, LineNumberNode)]
 pruneLineNumberNode(item::Expr) = item.head == :(block) ? pruneLineNumberNode(item.args) : Expr(item.head, pruneLineNumberNode(item.args)...)
 
-isfunction(ex::Expr) = ex.head == Symbol("function") || ex.head == :(=)
+function isfunction(ex::Expr)
+    if ex.head == Symbol("function") || ex.head == :(=)
+        return true
+    else
+        return false
+    end
+end
 isfunction(ex) = false
 
 blockfuncnames(block) = [ex.args[1].args[1] for ex in block if isfunction(ex)]
@@ -88,9 +94,9 @@ function codeinfo(func, argtypes::Array)
             cinfo.ssavaluetypes[i] = Tuple{getfield(vt, 2).parameters...}
         elseif isa(vt, Compiler.Const)
             cinfo.ssavaluetypes[i] = typeof(vt.val)
-        # elseif isa(vt, PartialStruct)
-        #    # println("PartialStruct: ",vt)
-        #    cinfo.ssavaluetypes[i] = getfield(vt, 1)
+        elseif isa(vt, PartialStruct)
+        #    println("PartialStruct: ", vt)
+            cinfo.ssavaluetypes[i] = getfield(vt, 1)
         #= 
         elseif isa(vt, Compiler.Const)
             if typeof(vt.val) <: OrdinalRange
