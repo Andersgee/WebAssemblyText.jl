@@ -127,8 +127,8 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
 end
 
 is_iterate(item) = isa(item, GlobalRef) && length(string(item.name)) >= 7 && string(item.name)[1:7] == "iterate"
-is_floatop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && items[1].name in keys(floatops) && (hasitemtype(ci, items[2], AbstractFloat) || (length(items) > 2 && hasitemtype(ci, items[3], AbstractFloat)))
-is_intop(ci::CodeInfo,items) = isa(items[1], GlobalRef) && items[1].name in keys(intops) && (hasitemtype(ci, items[2], [Integer, Bool, Nothing]) || (length(items) > 2 && hasitemtype(ci, items[3], [Integer, Bool, Nothing])))
+is_floatop(ci::CodeInfo, items) = isa(items[1], GlobalRef) && items[1].name in keys(floatops) && (hasitemtype(ci, items[2], AbstractFloat) || (length(items) > 2 && hasitemtype(ci, items[3], AbstractFloat)))
+is_intop(ci::CodeInfo, items) = isa(items[1], GlobalRef) && items[1].name in keys(intops) && (hasitemtype(ci, items[2], [Integer, Bool, Nothing]) || (length(items) > 2 && hasitemtype(ci, items[3], [Integer, Bool, Nothing])))
 
 floatops = Dict(
 :(+) => "f32.add", # these consume 2 args 

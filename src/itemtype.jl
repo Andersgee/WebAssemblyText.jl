@@ -18,9 +18,11 @@ function hasitemtype(ci::CodeInfo, items::Array, type::DataType)
         datatype = ci.slottypes[items[2].id]
         return datatype.parameters[1] <: type
     else
-        return any([itemtype(ci, item) <: type for item in items])
+        # return any([itemtype(ci, item) <: type for item in items])
+        return any([hasitemtype(ci, item, type) for item in items])
     end
 end
+
 """
     argtypes!(ci::CodeInfo, argtypes::Dict, funcs::Dict, items::Array)
 
