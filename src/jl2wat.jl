@@ -108,3 +108,37 @@ function process(func, funcs, argtypes, imports; debuginfo::Bool=false)
     wat = parenwrap(decl, wat)
     return ssa, wat
 end
+
+"""
+    @code_wat expression
+
+Macro for translating a single function by referencing the function rather than the source code of the function.
+(functions called will be put as imports rather than translated)
+
+# Example:
+
+```julia
+julia> hello(x) = 3.1*x
+julia> @code_wat hello(1.2)
+(module
+(memory (import "imports" "memory") 1)
+
+(func \$hello (export "hello") (param \$x f32) (result f32) 
+(return (f32.mul (f32.const 3.1) (local.get \$x))))
+)
+```
+"""
+macro code_wat(ex)
+    :(code_wat($(esc(ex.args[1])), Base.typeof.($(ex.args[2:end]))))
+end
+
+function code_wat(func, A)
+    imports = Dict()
+    funcs = Dict(func => func)
+    argtypes = Dict(func => A)
+    SSAs, WATs = process(func, funcs, argtypes, imports)
+    
+    WATs = joinn([getimports(imports); WATs; getbuiltins(SSAs)...])
+    memoryimport = """(memory (import "imports" "memory") 1)"""
+    return println("(module\n$memoryimport\n\n$WATs\n)")
+end
