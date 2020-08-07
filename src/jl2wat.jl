@@ -58,8 +58,10 @@ function jlstring2wat(str::AbstractString; debuginfo::Bool=false)
             haskey(processed, func) && continue
             ssa, wat = process(func, funcs, argtypes, imports; debuginfo=debuginfo)
 
-            push!(SSAs, ssa)
-            push!(WATs, wat)
+            if func != Symbol("exports")
+                push!(SSAs, ssa)
+                push!(WATs, wat)
+            end
             processed[func] = true
         end
     end

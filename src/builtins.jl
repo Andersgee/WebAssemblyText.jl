@@ -27,7 +27,7 @@ builtinfuncs = Dict(
 :(getindex) => raw"""(func $getindex (param $v i32) (param $i i32) (result f32)
 (f32.load (i32.add (local.get $v) (i32.shl (local.get $i) (i32.const 2)))))""",
 :(setindex!) => raw"""(func $setindex! (param $v i32) (param $x f32) (param $i i32)
-(f32.store (i32.add (local.get $v) (i32.shl (local.get $i) (i32.const 2))) (local.get \$x)))""",
+(f32.store (i32.add (local.get $v) (i32.shl (local.get $i) (i32.const 2))) (local.get $x)))""",
 :(firstindex) => raw"""(func $firstindex (param $v i32) (result i32)
 (i32.const 1))""",
 :(lastindex) => raw"""(func $lastindex (param $v i32) (result i32)

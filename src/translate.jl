@@ -117,6 +117,8 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         slotname = ci.slotnames[items[2].id]
         if isa(items[3], Array) && is_iterate(items[3][1])
             return ["local.set \$$(slotname) ( local.set \$$(slotname)i", translate(i, ci, items[3]), ")"]
+        elseif isa(items[3], Array) && hasname(items[3][1], :(size))
+            return ["local.set \$$(slotname) ( local.set \$$(slotname)2", translate(i, ci, items[3]), ")"]
         else
             return ["local.set \$$(slotname)", translate(i, ci, items[3])]
         end

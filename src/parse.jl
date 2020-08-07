@@ -78,7 +78,16 @@ function codeinfo(func, argtypes::Array)
             # because we cant have tuples. use 2 locals for iterator variables
             push!(cinfo.slotnames, Symbol("_$(i)i"))
             push!(cinfo.slottypes, getfield(st, 2).parameters[2])
+        elseif !isa(st, Compiler.Const) && length(st.parameters) > 1 && istuple(st)
+            println("i: ", i, " st: ", st)
+            # println("typeof(st): ", typeof(st))
+            println("st.parameters: ", st.parameters)
+            for j = 2:length(st.parameters)
+                push!(cinfo.slotnames, Symbol("$(cinfo.slotnames[i])$(j)"))
+                push!(cinfo.slottypes, st.parameters[2])
+            end
         end
+        
         if string(cinfo.slotnames[i]) == ""
             cinfo.slotnames[i] = Symbol("_$i")
         end
@@ -110,3 +119,5 @@ function codeinfo(func, argtypes::Array)
     end
     return cinfo, Rtype
 end
+
+istuple(slottype) = all([typeof(p) <: DataType for p in slottype.parameters])
