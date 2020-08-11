@@ -12,7 +12,8 @@ julia> println(wat)
 """
 function jl2wat(path::AbstractString; debuginfo::Bool=false)
     isfile(path) || return error("No such file: $path")
-    str = open(f -> read(f, String), path)
+    #str = open(f -> read(f, String), path)
+    str = read(path, String)
     return jlstring2wat(str; debuginfo=debuginfo)
 end
 
@@ -66,10 +67,13 @@ function jlstring2wat(str::AbstractString; debuginfo::Bool=false)
         end
     end
     
-    WATs = joinn([getimports(imports); WATs; getbuiltins(SSAs)...])
+    #WATs = joinn([getimports(imports); WATs; getbuiltins(SSAs)...])
+    WATs = joinn([getimports(imports); WATs; getallbuiltins()])
     memoryimport = """(memory (import "imports" "memory") 1)"""
     return "(module\n$memoryimport\n\n$WATs\n)"
 end
+
+getallbuiltins() = open(f -> read(f, String), joinpath(@__DIR__,"builtins.wat"))
 
 """
     process(func, funcs, argtypes)

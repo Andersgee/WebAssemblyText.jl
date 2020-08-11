@@ -24,6 +24,13 @@ wasm does comparison as ints with i32.const 0 meaning false
 so :(iterate) have to return 0 instead of false when iterator is empty, which is an issue when iterating across zero.
 """
 builtinfuncs = Dict(
+:(zero) => "wat",
+:(zeros) => "wat",
+:(randn) => "wat",
+:(copy) => "wat",
+:(min) => "wat",
+:(max) => "wat",
+:(size) => "wat",
 :(getindex) => raw"""(func $getindex (param $v i32) (param $i i32) (result f32)
 (f32.load (i32.add (local.get $v) (i32.shl (local.get $i) (i32.const 2)))))""",
 :(setindex!) => raw"""(func $setindex! (param $v i32) (param $x f32) (param $i i32)

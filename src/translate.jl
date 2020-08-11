@@ -21,7 +21,8 @@ function declaration(cinfo, func, argtypes, Rtype)
 
     ret = [] 
     if length(Rtype.parameters) > 0
-        isarray = Rtype == Array{Float64,1}
+        #isarray = Rtype == Array{Float64,1}
+        isarray = Rtype <: Array
         if isarray
             push!(ret, "(result i32)")
         else
@@ -41,7 +42,11 @@ function declaration(cinfo, func, argtypes, Rtype)
         end
     end
     
-    return join([decl; ret; "\n"; locals], " ")
+    if length(locals)>0
+        return join([decl; ret; "\n"; locals], " ")
+    else
+        return join([decl; ret], " ")
+    end 
 end
 
 
@@ -85,6 +90,20 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         return ["$(intops[items[1].name])"; translate(i, ci, items[2:end])]
     
     # special expression?
+    elseif hasname(items[1], :(size)) && length(items)==3
+        return ["call \$size$(items[3])"; translate(i, ci, items[2])]
+    elseif hasname(items[1], :(getindex)) && length(items)==3
+        if isa(items[2],SlotNumber) && istuple(ci.slottypes[items[2].id])
+            #allow indexing into tuples
+            id = items[2].id
+            fieldnumber = items[3]
+            name = fieldnumber == 1 ? "$(ci.slotnames[id])" : "$(ci.slotnames[id])$(fieldnumber)"
+            return "(local.get \$$name)"
+        else
+            return ["call \$getlinearindex"; translate(i, ci, items[2:end])]
+        end
+    elseif hasname(items[1], :(setindex!)) && length(items)==4
+        return ["call \$setlinearindex"; translate(i, ci, items[2:end])]
     elseif hasname(items[1], :(ifelse))
         return ["select"; translate(i, ci, items[2:end])]
     elseif hasname(items[1], Symbol("return"))
@@ -117,8 +136,17 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         slotname = ci.slotnames[items[2].id]
         if isa(items[3], Array) && is_iterate(items[3][1])
             return ["local.set \$$(slotname) ( local.set \$$(slotname)i", translate(i, ci, items[3]), ")"]
-        elseif isa(items[3], Array) && hasname(items[3][1], :(size))
-            return ["local.set \$$(slotname) ( local.set \$$(slotname)2", translate(i, ci, items[3]), ")"]
+        elseif isa(items[3], Array) && istuple(ci.slottypes[items[2].id])
+            params = ci.slottypes[items[2].id].parameters
+            settuples = []
+            closetuples = []
+            for n = 2:length(params)
+                push!(settuples,"(local.set \$$(slotname)$(n)")
+                push!(closetuples, ")")
+            end
+            settuples = spacedjoin(settuples)
+            closetuples = spacedjoin(closetuples)
+            return ["local.set \$$(slotname)",settuples, translate(i, ci, items[3]), closetuples]
         else
             return ["local.set \$$(slotname)", translate(i, ci, items[3])]
         end

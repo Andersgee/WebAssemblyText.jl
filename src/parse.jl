@@ -69,22 +69,20 @@ function codeinfo(func, argtypes::Array)
 
     
     for (i, st) in enumerate(cinfo.slottypes)
-        if isa(st, Union) # aka iterator variable
-            # iterators are either nothing or state (which is a tuple of [value,index])
-            # so getfield 2 gets state types
-            cinfo.slottypes[i] = getfield(st, 2).parameters[1] # valtype
-            # cinfo.slottypes[i] = Tuple{getfield(st, 2).parameters...}
-
-            # because we cant have tuples. use 2 locals for iterator variables
+        if isa(st, Union) 
+            # iterator variables are union of [nothing, [value,index]]
+            # also they will not have any name for some reason
+            
+            # anyway, getfield 2 gets the [value,index] tuple
+            cinfo.slottypes[i] = getfield(st, 2).parameters[1]
             push!(cinfo.slotnames, Symbol("_$(i)i"))
             push!(cinfo.slottypes, getfield(st, 2).parameters[2])
         elseif !isa(st, Compiler.Const) && length(st.parameters) > 1 && istuple(st)
-            println("i: ", i, " st: ", st)
-            # println("typeof(st): ", typeof(st))
-            println("st.parameters: ", st.parameters)
+            #expand tuple into individual slots 
+            #cinfo.slottypes[i] = st.parameters[1] #keep the "incorrect" tuple type of this slot
             for j = 2:length(st.parameters)
                 push!(cinfo.slotnames, Symbol("$(cinfo.slotnames[i])$(j)"))
-                push!(cinfo.slottypes, st.parameters[2])
+                push!(cinfo.slottypes, st.parameters[j])
             end
         end
         
