@@ -1,21 +1,13 @@
-"""
-    inline(ssa::Array)
-
-Get a wat single string from a an already translated ssa.
-
-# Details:
-- Get a list of ssa references
-- Add parenthesis
-- Replace refs by the referenced lines
-- Delete the referenced lines
-- add block and loop control flow based on GotoNodes
-- Join.
-"""
 function stringify(ssa::Array)
     ssa = [line for line in ssa if !isnothing(line)]
     return join(spacedjoin.(ssa), "\n")
 end
 
+"""
+    inlinessarefs(ssa::Array)
+
+Copypaste ssa refs into place and delete used ssa refs. 
+"""
 function inlinessarefs(ssa::Array)
     usedrefs = []
     usedrefs!(usedrefs, ssa)

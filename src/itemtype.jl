@@ -1,7 +1,7 @@
 """
     itemtype(ci::CodeInfo, item)
 
-Get a concrete type, specialized on item type.
+Infer a concrete DataType from item. Item might be slotnumber or ssavalue etc.
 """
 itemtype(ci::CodeInfo, item) = typeof(item)
 itemtype(ci::CodeInfo, item::DataType) = item
