@@ -50,42 +50,31 @@ blockfuncexpressions(block) = [ex.args[2] for ex in block if isfunction(ex)]
 Essentially code_typed() with optimize=false
 
 # Details: 
-Not optimizing complicates type inference, but ultimately simplifies
-translation becuase the returned CodeInfo is much cleaner.
-
-Also, we have to modifiy CodeInfo by
-- making sure sure slotnames contain names
-- making sure slottypes and ssavaluetypes contain types
-
-this has mostly to do with iterator variables
+Not optimizing gives a much simpler ast without phinodes and boundchecks.
 """
 function codeinfo(func, argtypes::Array)
     ct = code_typed(Base.eval(Evalscope, func), Tuple{argtypes...}; optimize=false, debuginfo=:none)[1] # none, source
     cinfo = ct[1]
     Rtype = ct[2]
-
-    # wasm can now return multiple values. NICE!
-    # length(Rtype.parameters) > 1 && error("WebAssembly only allow functions to return a single number or nothing. function $func returns $Rtype")
-
     
     for (i, st) in enumerate(cinfo.slottypes)
         if isa(st, Union) 
             # iterator variables are union of [nothing, [value,index]]
-            # also they will not have any name for some reason
-            
-            # anyway, getfield 2 gets the [value,index] tuple
+            # getfield(st,2) gets the [value,index] tuple
             cinfo.slottypes[i] = getfield(st, 2).parameters[1]
             push!(cinfo.slotnames, Symbol("_$(i)i"))
             push!(cinfo.slottypes, getfield(st, 2).parameters[2])
         elseif !isa(st, Compiler.Const) && length(st.parameters) > 1 && istuple(st)
-            #expand tuple into individual slots 
-            #cinfo.slottypes[i] = st.parameters[1] #keep the "incorrect" tuple type of this slot
+            # wasm can now return multiple values, but tuples dont exist
+            # so create individual variables representing the tuple parameters 
+            # (but keep the "incorrect" tuple type of the original tuple slot)
             for j = 2:length(st.parameters)
                 push!(cinfo.slotnames, Symbol("$(cinfo.slotnames[i])$(j)"))
                 push!(cinfo.slottypes, st.parameters[j])
             end
         end
         
+        # make sure slots have names
         if string(cinfo.slotnames[i]) == ""
             cinfo.slotnames[i] = Symbol("_$i")
         end
@@ -93,26 +82,12 @@ function codeinfo(func, argtypes::Array)
 
     
     for (i, vt) in enumerate(cinfo.ssavaluetypes)
-        if isa(vt, Union)
-            # cinfo.ssavaluetypes[i] = getfield(vt, 2).parameters[1]
-            # cinfo.ssavaluetypes[i] = getfield(vt, 2).parameters
-            # cinfo.ssavaluetypes[i] = Tuple{Int,Int} # handle iterator variables as [index,notempty] instead of union ([value,index], nothing)
-            
+        if isa(vt, Union)  
             cinfo.ssavaluetypes[i] = Tuple{getfield(vt, 2).parameters...}
         elseif isa(vt, Compiler.Const)
             cinfo.ssavaluetypes[i] = typeof(vt.val)
         elseif isa(vt, PartialStruct)
-        #    println("PartialStruct: ", vt)
             cinfo.ssavaluetypes[i] = getfield(vt, 1)
-        #= 
-        elseif isa(vt, Compiler.Const)
-            if typeof(vt.val) <: OrdinalRange
-                cinfo.ssavaluetypes[i] = typeof(vt.val[1])
-            else
-                cinfo.ssavaluetypes[i] = typeof(vt.val)
-            end
-        elseif isa(vt, DataType) && length(vt.parameters) > 1
-            cinfo.ssavaluetypes[i] = vt.parameters[1] =#
         end
     end
     return cinfo, Rtype

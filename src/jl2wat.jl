@@ -12,7 +12,7 @@ julia> println(wat)
 """
 function jl2wat(path::AbstractString; debuginfo::Bool=false)
     isfile(path) || return error("No such file: $path")
-    #str = open(f -> read(f, String), path)
+    # str = open(f -> read(f, String), path)
     str = read(path, String)
     return jlstring2wat(str; debuginfo=debuginfo)
 end
@@ -67,13 +67,13 @@ function jlstring2wat(str::AbstractString; debuginfo::Bool=false)
         end
     end
     
-    #WATs = joinn([getimports(imports); WATs; getbuiltins(SSAs)...])
+    # WATs = joinn([getimports(imports); WATs; getbuiltins(SSAs)...])
     WATs = joinn([getimports(imports); WATs; getallbuiltins()])
     memoryimport = """(memory (import "imports" "memory") 1)"""
     return "(module\n$memoryimport\n\n$WATs\n)"
 end
 
-getallbuiltins() = open(f -> read(f, String), joinpath(@__DIR__,"builtins.wat"))
+getallbuiltins() = open(f -> read(f, String), joinpath(@__DIR__, "builtins.wat"))
 
 """
     process(func, funcs, argtypes)
@@ -118,33 +118,28 @@ end
 """
     @code_wat expression
 
-Macro for translating a single function by referencing the function rather than the source code of the function.
-(functions called will be put as imports rather than translated)
+Macro for translating a single function without adding on imports and builtins.
 
 # Examples
 
 ```julia
 julia> hello(x) = 3.1*x
 julia> @code_wat hello(1.2)
-(module
-(memory (import "imports" "memory") 1)
 
 (func \$hello (export "hello") (param \$x f32) (result f32) 
 (return (f32.mul (f32.const 3.1) (local.get \$x))))
-)
 ```
 """
 macro code_wat(ex)
-    :(code_wat($(esc(ex.args[1])), Base.typeof.($(ex.args[2:end]))))
+    :(code_wat($(esc(ex.args[1])), $(ex.args[2:end])))
 end
 
-function code_wat(func, A)
+function code_wat(func, args)
+    types = typeof.([Base.eval(Evalscope, arg) for arg in args])
     imports = Dict()
     funcs = Dict(func => func)
-    argtypes = Dict(func => A)
-    SSAs, WATs = process(func, funcs, argtypes, imports)
-    
-    WATs = joinn([getimports(imports); WATs; getbuiltins(SSAs)...])
-    memoryimport = """(memory (import "imports" "memory") 1)"""
-    return println("(module\n$memoryimport\n\n$WATs\n)")
+    argtypes = Dict(func => types)
+
+    ssa, wat = process(func, funcs, argtypes, imports)
+    return println(wat)
 end
