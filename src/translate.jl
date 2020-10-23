@@ -102,8 +102,17 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         else
             return ["call \$getlinearindex"; translate(i, ci, items[2:end])]
         end
+    #=
+    elseif hasname(items[1], :(vect))
+        len = length(items)-1
+    =#
     elseif hasname(items[1], :(setindex!)) && length(items)==4
-        return ["call \$setlinearindex"; translate(i, ci, items[2:end])]
+        #if itemtype(ci, items[3]) <: Integer
+        if hasitemtype(ci, items[3], [Integer, Bool])
+            return ["call \$setlinearindex_int"; translate(i, ci, items[2:end])]
+        else
+            return ["call \$setlinearindex"; translate(i, ci, items[2:end])]
+        end
     elseif hasname(items[1], :(ifelse))
         return ["select"; translate(i, ci, items[2:end])]
     elseif hasname(items[1], Symbol("return"))

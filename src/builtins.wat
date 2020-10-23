@@ -94,6 +94,10 @@
   (f32.store (call $bytepointer (local.get $M) (local.get $i)) (local.get $x))
 )
 
+(func $setlinearindex_int (export "setlinearindex_int") (param $M i32) (param $x i32) (param $i i32)
+  (i32.store (call $bytepointer (local.get $M) (local.get $i)) (local.get $x))
+)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; matrix getindex / setindex
 
