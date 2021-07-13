@@ -2,6 +2,7 @@ module WebAssemblyText
 
 using Core: Compiler, SSAValue, SlotNumber, TypedSlot, GotoNode, CodeInfo, NewvarNode
 using Core.Compiler: GotoIfNot, PartialStruct
+using Core: ReturnNode
 
 """
 Evalscope is a dummy module where all evaluated expressions live.

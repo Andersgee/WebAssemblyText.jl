@@ -7,7 +7,7 @@ function declaration(cinfo, func, argtypes, Rtype)
     Nparams = length(argtypes)
     slotnames = cinfo.slotnames[2:end]
     slottypes = cinfo.slottypes[2:end]
-    slottypes = [slottype <: AbstractFloat ? "f32" : "i32" for slottype in slottypes]
+    slottypes = get_slottypes(slottypes)
 
     decl = ["func \$$func (export \"$func\")"]
     locals = []
@@ -49,6 +49,20 @@ function declaration(cinfo, func, argtypes, Rtype)
     end 
 end
 
+function get_slottypes(slottypes)
+    st = []
+    for slottype in slottypes
+        if slottype <: AbstractFloat
+            push!(st, "f32")
+        elseif length(slottype.parameters) > 1 && istuple(slottype)
+            t = slottype.parameters[1] <: AbstractFloat ? "f32" : "i32"
+            push!(st, t)
+        else
+            push!(st, "i32")
+        end
+    end
+    return st
+end
 
 """
     translate(i::Integer, cinfo::CodeInfo, item)
@@ -90,8 +104,12 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         return ["$(intops[items[1].name])"; translate(i, ci, items[2:end])]
     
     # special expression?
+    
     elseif hasname(items[1], :(size)) && length(items)==3
         return ["call \$size$(items[3])"; translate(i, ci, items[2])]
+    elseif hasname(items[1], :(tuple))
+        #ignore construction of tuples...
+        return [translate.((i,), (ci,), items[2:end])]
     elseif hasname(items[1], :(getindex)) && length(items)==3
         if isa(items[2],SlotNumber) && istuple(ci.slottypes[items[2].id])
             #allow indexing into tuples

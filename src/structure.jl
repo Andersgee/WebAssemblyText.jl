@@ -51,6 +51,8 @@ Restructure items for more straightforward translation.
 """
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item) = item
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item::GotoNode) = Any[Expr(:(goto), item.label)]
+restructure(ci::CodeInfo, i::Integer, ssa::Array, item::GotoIfNot) = [Expr(:(gotoif), item.dest), ["i32.eqz"; item.cond]]
+restructure(ci::CodeInfo, i::Integer, ssa::Array, item::ReturnNode) = Any[:(return), item.val]
 function restructure(ci::CodeInfo, i::Integer, ssa::Array, items::Array)
     if length(items) > 3 && hasname(items[1], keys(floatops))
         # expand N-ary
@@ -58,13 +60,14 @@ function restructure(ci::CodeInfo, i::Integer, ssa::Array, items::Array)
         for i = 4:length(items)
             expanded = [items[1], items[i], expanded]
         end
+        
         return expanded
     
     elseif hasname(items[1], :(getfield))
         fieldnumber = items[3]
         if isa(items[2], SlotNumber)
             id = items[2].id
-            name = fieldnumber == 1 ? "_$(ci.slotnames[id])" : "_$(ci.slotnames[id])$(fieldnumber)" # get value or index
+            name = fieldnumber == 1 ? "$(ci.slotnames[id])" : "$(ci.slotnames[id])$(fieldnumber)" # get value or index
             return "(local.get \$$name)"
         elseif isa(items[2], SSAValue)
             if isa(ssa[items[2].id], Array)
@@ -92,9 +95,6 @@ function restructure(ci::CodeInfo, i::Integer, ssa::Array, items::Array)
     elseif hasname(items[1], :(:))
         # return items[2:end]
         return nothing
-    elseif hasname(items[1], :(gotoifnot))
-        target = items[3]
-        return [Expr(:(gotoif), target), ["i32.eqz"; items[2]]]
     else
         return restructure.((ci,), (i,), (ssa,), items)
     end

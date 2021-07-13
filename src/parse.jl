@@ -68,10 +68,12 @@ function codeinfo(func, argtypes::Array)
             # wasm can now return multiple values, but tuples dont exist
             # so create individual variables representing the tuple parameters 
             # (but keep the "incorrect" tuple type of the original tuple slot)
+            
             for j = 2:length(st.parameters)
                 push!(cinfo.slotnames, Symbol("$(cinfo.slotnames[i])$(j)"))
                 push!(cinfo.slottypes, st.parameters[j])
             end
+            #cinfo.slottypes[i] = st.parameters[1] #actually dont keep the "tuple" type of the first 
         end
         
         # make sure slots have names

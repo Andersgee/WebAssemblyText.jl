@@ -55,6 +55,7 @@ end
 function initialblocks(gotos::Dict{Int,Int})
     # lists of which block(s) each ssa index belong to
     ssaparents = [Int[] for _ = 1:maximum(values(gotos)) + 1]
+    #ssaparents = [Int[] for _ = 1:20]
     for (origin, target) in gotos
         a, b = minmax(origin, target)
         for j = a:b
