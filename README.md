@@ -8,7 +8,7 @@ Convert Julia to WebAssembly text.
 ```julia
 @code_wat expr
 
-jl2wat(filename)
+jl2wat(path)
 
 jlstring2wat(str)
 ```

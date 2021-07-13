@@ -70,7 +70,11 @@ function jlstring2wat(str::AbstractString; debuginfo::Bool=false)
     # WATs = joinn([getimports(imports); WATs; getbuiltins(SSAs)...])
     WATs = joinn([getimports(imports); WATs; getallbuiltins()])
     memoryimport = """(memory (import "imports" "memory") 1)"""
-    return "(module\n$memoryimport\n\n$WATs\n)"
+    default_jsimports = raw"""(func $rand (import "imports" "rand") (result f32))
+    (func $cos (import "imports" "cos") (param $a f32) (result f32))
+    (func $log (import "imports" "log") (param $a f32) (result f32))
+    (func $^ (import "imports" "^") (param $a f32) (param $b f32) (result f32))"""
+    return """(module$memoryimport\n\n$default_jsimports\n$WATs\n)"""
 end
 
 getallbuiltins() = open(f -> read(f, String), joinpath(@__DIR__, "builtins.wat"))
