@@ -115,5 +115,44 @@ Deno.test("tuplecall", () => {
   assertEquals(r, 2.5199999809265137);
 });
 
+Deno.test("matrix: mul", () => {
+  const M1 = wasm.store([1, 2, 3, 4, 5, 6, 7, 8], [4, 2]);
+  const M2 = wasm.store([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [2, 5]);
+  const r = wasm.mul(M1, M2);
+  const gold = [
+    11, 14, 17, 20, 23, 30, 37, 44, 35, 46, 57, 68, 47, 62, 77, 92, 59, 78, 97,
+    116,
+  ];
+  assertEquals(wasm.view(r), gold);
+});
+
+Deno.test("matrix: muladd", () => {
+  const M1 = wasm.store([1, 2, 3, 4, 5, 6, 7, 8], [4, 2]);
+  const M2 = wasm.store([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [2, 5]);
+  const b = wasm.store([1, 2, 3, 4]);
+  const r = wasm.muladd(M1, M2, b);
+  const gold = [
+    12, 16, 20, 24, 24, 32, 40, 48, 36, 48, 60, 72, 48, 64, 80, 96, 60, 80, 100,
+    120,
+  ];
+  assertEquals(wasm.view(r), gold);
+});
+
+Deno.test("matrix: mul then add", () => {
+  const M1 = wasm.store([1, 2, 3, 4, 5, 6, 7, 8], [4, 2]);
+  const M2 = wasm.store([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [2, 5]);
+
+  const b = wasm.store([
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+  ]);
+  const r = wasm.add(wasm.mul(M1, M2), b);
+
+  const gold = [
+    12, 16, 20, 24, 28, 36, 44, 52, 44, 56, 68, 80, 60, 76, 92, 108, 76, 96,
+    116, 136,
+  ];
+  assertEquals(wasm.view(r), gold);
+});
+
 // deno test --allow-read --allow-write --allow-net runtests.js
 // deno run --allow-read --allow-write --allow-net --watch --unstable  runtests.js
