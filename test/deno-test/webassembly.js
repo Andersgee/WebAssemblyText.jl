@@ -1,5 +1,5 @@
-export default async function webassembly(path) {
-  const imports = {
+function defaultImports() {
+  return {
     memory: new WebAssembly.Memory({ initial: 1, maximum: 1 }), //default 1 page of memory. Call wasm.requiredpages() after storing data for appropriate number here.
     println: (x) => console.log(x),
     "^": (a, p) => Math.pow(a, p),
@@ -26,12 +26,31 @@ export default async function webassembly(path) {
     log2: (a) => Math.log2(a),
     sign: (a) => Math.sign(a),
   };
+}
+
+export default async function webassembly_deno(path) {
+  const imports = defaultImports()
 
   const readWasm = await Deno.readFile(path);
   const bin = new Uint8Array(readWasm);
   const mod = new WebAssembly.Module(bin);
   const instance = new WebAssembly.Instance(mod, { imports });
-  const wasm = { ...instance.exports };
+
+  return amendexports(instance.exports, imports)
+}
+
+export default async function webassembly_http(url) {
+  const imports = defaultImports()
+
+  const mod = await WebAssembly.instantiateStreaming(fetch(url), {
+      imports,
+    });
+
+  return amendexports(mod.instance.exports, imports)
+}
+
+export default async function amendexports(exports, imports) {
+  const wasm = { ...exports };
 
   //mem and intmem are VIEWS referring to the actual buffer
   wasm.mem = new Float32Array(imports.memory.buffer);

@@ -1,7 +1,7 @@
 import { assertEquals } from "https://deno.land/std@0.88.0/testing/asserts.ts";
-import webassembly from "./webassembly.js";
+import webassembly_deno from "./webassembly.js";
 
-const wasm = await webassembly("wasm/test.wasm");
+const wasm = await webassembly_deno("wasm/test.wasm");
 
 Deno.test("initial memory", () => {
   const total_allocated_bytes = wasm.intmem[0];
