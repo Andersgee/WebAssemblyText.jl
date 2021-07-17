@@ -17,11 +17,6 @@ isbuiltin(item::GlobalRef) = haskey(builtinfuncs, item.name)
 
 """
 builtinfuncs: a dict with handwritten .wat of some julia builtins.
-
-# Details:
-cant use types such as Bool or Nothing or multiple return values 
-wasm does comparison as ints with i32.const 0 meaning false
-so :(iterate) have to return 0 instead of false when iterator is empty, which is an issue when iterating across zero.
 """
 builtinfuncs = Dict(
 :(zero) => "wat",

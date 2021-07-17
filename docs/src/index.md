@@ -7,4 +7,5 @@
 ```@docs
 jl2wat
 jlstring2wat
+@code_wat
 ```

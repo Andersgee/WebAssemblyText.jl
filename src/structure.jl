@@ -41,13 +41,14 @@ function structure(item::GlobalRef)
 end
 
 """
-    restructure(items)
+    restructure(ci::CodeInfo, i::Integer, ssa::Array, items::Array)
 
 Restructure items for more straightforward translation.
 
-# Details:
-- expand N-ary representation ([mul,a,b,c,d] => [mul,d,[mul,c,[mul,a,b]]])
-- rewrite ifelse as select [ifselse, cond, a, b] => [select, a, b, cond]
+# Details
+for example, rewriting expressions like this:
+- [mul,a,b,c,d] => [mul,d,[mul,c,[mul,a,b]]]
+- [ifselse, cond, a, b] => [select, a, b, cond]
 """
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item) = item
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item::GotoNode) = Any[Expr(:(goto), item.label)]
@@ -55,7 +56,7 @@ restructure(ci::CodeInfo, i::Integer, ssa::Array, item::GotoIfNot) = [Expr(:(got
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item::ReturnNode) = Any[:(return), item.val]
 function restructure(ci::CodeInfo, i::Integer, ssa::Array, items::Array)
     if length(items) > 3 && hasname(items[1], keys(floatops))
-        # expand N-ary
+        # expand N-ary representation ([mul,a,b,c,d] => [mul,d,[mul,c,[mul,a,b]]])
         expanded = items[1:3]
         for i = 4:length(items)
             expanded = [items[1], items[i], expanded]
@@ -91,6 +92,7 @@ function restructure(ci::CodeInfo, i::Integer, ssa::Array, items::Array)
     elseif hasname(items[1], :(iterate))
         return specializediterate(ci, i, ssa, items)
     elseif hasname(items[1], :(ifelse))
+        # rewrite ifelse as select [ifselse, cond, a, b] => [select, a, b, cond]
         return [items[1],items[3],items[4],items[2]]
     elseif hasname(items[1], :(:))
         # return items[2:end]
