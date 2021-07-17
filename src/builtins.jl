@@ -16,7 +16,7 @@ isbuiltin(item) = false
 isbuiltin(item::GlobalRef) = haskey(builtinfuncs, item.name)
 
 """
-builtinfuncs: a dict with handwritten .wat of some julia builtins.
+builtinfuncs: a Dict with handwritten .wat of some julia builtins.
 """
 builtinfuncs = Dict(
 :(zero) => "wat",
