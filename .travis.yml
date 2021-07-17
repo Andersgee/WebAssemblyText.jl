@@ -3,7 +3,7 @@ language: julia
 notifications:
   email: false
 julia:
-  - 1.5
+  - 1.6
   - nightly
 os:
   - linux
@@ -24,11 +24,8 @@ jobs:
       os: osx
   include:
     - stage: Documentation
-      julia: 1
-      script: |
-        julia --project=docs -e '
-          using Pkg
-          Pkg.develop(PackageSpec(path=pwd()))
-          Pkg.instantiate()
-          include("docs/make.jl")'
+      julia: 1.6
+      script:
+        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+        - julia --project=docs/ docs/make.jl
       after_success: skip
