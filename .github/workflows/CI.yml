@@ -50,9 +50,9 @@ jobs:
       - run: |
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
-            using WebassemblyText
-            DocMeta.setdocmeta!(WebassemblyText, :DocTestSetup, :(using WebassemblyText); recursive=true)
-            doctest(WebassemblyText)'
+            using WebAssemblyText
+            DocMeta.setdocmeta!(WebAssemblyText, :DocTestSetup, :(using WebAssemblyText); recursive=true)
+            doctest(WebAssemblyText)'
       - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
