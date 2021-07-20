@@ -1,7 +1,6 @@
 # WebAssemblyText.jl
 
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://andersgee.github.io/WebAssemblyText.jl/dev)
-[![Build Status](https://travis-ci.com/andersgee/WebAssemblyText.jl.svg?branch=master)](https://travis-ci.com/andersgee/WebAssemblyText.jl)
+[![Documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://andersgee.github.io/WebAssemblyText.jl/dev) ![Build Status](https://github.com/andersgee/WebAssemblyText.jl/actions/workflows/CI.yml/badge.svg)
 
 Convert Julia to WebAssembly text.
 
