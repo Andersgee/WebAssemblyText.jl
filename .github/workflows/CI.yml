@@ -57,3 +57,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+  slacknotify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: "https://slack-andybot.herokuapp.com/webassemblytext-action"
+          method: "POST"
+          data: '{"supersafepassword":"abcda"}'
