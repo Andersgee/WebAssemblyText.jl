@@ -65,4 +65,4 @@ jobs:
         with:
           url: "https://slack-andybot.herokuapp.com/webassemblytext-action"
           method: "POST"
-          data: '{"supersafepassword":"abcda"}'
+          data: '{"supersafepassword":"abcdab"}'
