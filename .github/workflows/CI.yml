@@ -13,7 +13,7 @@ jobs:
           deno-version: v1.x
       - name: Test compiled wasm with deno
         working-directory: ./test
-        run: deno test --allow-read test/deno-test/test.js
+        run: deno test --allow-read deno-test/test.js
   juliatest:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
