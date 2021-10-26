@@ -11,10 +11,11 @@ jobs:
       - uses: denoland/setup-deno@v1
         with:
           deno-version: v1.x
-      - name: Test compiled wasm with deno
+      - name: wasm floatops tests
         working-directory: ./test
-        run: |
-          deno test --allow-read deno-test/floatops.js
+        run: deno test --allow-read deno-test/floatops.js
+      - name: wasm matrix tests
+        working-directory: ./test
         run: deno test --allow-read deno-test/test.js
   juliatest:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
