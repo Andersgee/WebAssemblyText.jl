@@ -53,7 +53,8 @@ for example, rewriting expressions like this:
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item) = item
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item::GotoNode) = Any[Expr(:(goto), item.label)]
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item::GotoIfNot) = [Expr(:(gotoif), item.dest), ["i32.eqz"; item.cond]]
-restructure(ci::CodeInfo, i::Integer, ssa::Array, item::ReturnNode) = Any[:(return), item.val]
+restructure(ci::CodeInfo, i::Integer, ssa::Array, item::ReturnNode) = Any[Symbol("return"), item.val]
+
 function restructure(ci::CodeInfo, i::Integer, ssa::Array, items::Array)
     if length(items) > 3 && hasname(items[1], keys(floatops))
         # expand N-ary representation ([mul,a,b,c,d] => [mul,d,[mul,c,[mul,a,b]]])

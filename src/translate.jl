@@ -134,7 +134,8 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
     elseif hasname(items[1], :(ifelse))
         return ["select"; translate(i, ci, items[2:end])]
     elseif hasname(items[1], Symbol("return"))
-        if hasname(items[2], Symbol("nothing"))
+        #handle both 'return' and 'return nothing' (and simply 'nothing' at end of function) as simply return
+        if hasname(items[2], Symbol("nothing")) || isnothing(items[2])
             return ["return"]
         elseif isa(items[2], Array) && hasname(items[2][1], :(tuple))
             return ["return"; translate(i, ci, items[2][2:end])]
