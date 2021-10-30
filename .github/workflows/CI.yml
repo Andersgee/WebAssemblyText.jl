@@ -69,6 +69,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
   slacknotify:
+    name: Notify Slack
     runs-on: ubuntu-latest
     steps:
       - name: Notify Slack
