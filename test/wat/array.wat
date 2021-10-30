@@ -1,5 +1,8 @@
 (module(memory (import "imports" "memory") 1)
 
+(func $console_log (import "imports" "console_log") (param $ptr i32))
+(func $console_warn (import "imports" "console_warn") (param $ptr i32))
+(func $console_error (import "imports" "console_error") (param $ptr i32))
 (func $rand (import "imports" "rand") (result f32))
 (func $cos (import "imports" "cos") (param $a f32) (result f32))
 (func $log (import "imports" "log") (param $a f32) (result f32))
@@ -161,6 +164,15 @@
 ;; Ḿ[i,j] = memory[M + 4 + 4*(i + (j-1)*size(M,1))]                          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;allocate some initial memory for counting used memory and holding temporary arrays
+;;memory[0] is supposed to always point to the first currently un-allocated memory
+;;so initial memory[0] = 
+(func $allocate_init (export "allocate_init")
+  (local $tmplen i32)
+  (local.set $tmplen (i32.const 282)) ;;max length of any temporary array (mostly used for console.log("my string") without allocation). Lets do 280 like twitter because why not
+  (i32.store (i32.const 0) (call $mul4 (i32.add (i32.const 1) (local.get $tmplen) )))
+)
+
 (func $mul4 (param $i i32) (result i32)
   (i32.shl (local.get $i) (i32.const 2))
 )
@@ -187,11 +199,6 @@
 (func $setsize (export "setsize") (param $M i32) (param $i i32) (param $j i32)
   (i32.store (local.get $M) (local.get $i))
   (i32.store (i32.add (local.get $M) (i32.const 4)) (local.get $j))
-)
-
-;;keep first index to count used memory
-(func $allocate_init (export "allocate_init")
-  (i32.store (i32.const 0) (i32.const 4))
 )
 
 ;;add 8+4*len to mem[0], return what mem[0] was before
@@ -364,4 +371,28 @@
 (func $zero (param $M i32) (result i32)
   (call $zeros (call $size1 (local.get $M)) (call $size2 (local.get $M)))
 )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; temporary arrays
+
+;;same as setlinearindex_int but always use the pre-allocated temporary array
+(func $setlinearindex_int_tmp (param $x i32) (param $i i32)
+  (local $M i32)
+  (local.set $M (i32.const 4)) ;;the temporary array
+  (call $setlinearindex_int (local.get $M) (local.get $x) (local.get $i))
+)
+
+(func $setlinearindex_tmp (param $x f32) (param $i i32)
+  (local $M i32)
+  (local.set $M (i32.const 4)) ;;the temporary array
+  (call $setlinearindex (local.get $M) (local.get $x) (local.get $i))
+)
+
+(func $setsize_tmp (param $i i32) (param $j i32)
+  (local $M i32)
+  (local.set $M (i32.const 4)) ;;the temporary array
+  (i32.store (local.get $M) (local.get $i))
+  (i32.store (i32.add (local.get $M) (i32.const 4)) (local.get $j))
+)
+
 )

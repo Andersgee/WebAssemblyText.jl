@@ -70,7 +70,10 @@ function jlstring2wat(str::AbstractString; debuginfo::Bool=false)
     # WATs = joinn([getimports(imports); WATs; getbuiltins(SSAs)...])
     WATs = joinn([getimports(imports); WATs; getallbuiltins()])
     memoryimport = """(memory (import "imports" "memory") 1)"""
-    default_jsimports = raw"""(func $rand (import "imports" "rand") (result f32))
+    default_jsimports = raw"""(func $console_log (import "imports" "console_log") (param $ptr i32))
+    (func $console_warn (import "imports" "console_warn") (param $ptr i32))
+    (func $console_error (import "imports" "console_error") (param $ptr i32))
+    (func $rand (import "imports" "rand") (result f32))
     (func $cos (import "imports" "cos") (param $a f32) (result f32))
     (func $log (import "imports" "log") (param $a f32) (result f32))
     (func $^ (import "imports" "^") (param $a f32) (param $b f32) (result f32))"""
@@ -96,11 +99,13 @@ function process(func, funcs, argtypes, imports; debuginfo::Bool=false)
     cinfo, Rtype = codeinfo(func, argtypes[func])
     ssa = structure(cinfo.code)
     
-    # debuginfo && debugprint(ssa, cinfo, binfo)
+    #debuginfo && debugprint(ssa, cinfo, binfo)
+    #debugprint(ssa, cinfo, blockinfo(ssa))
     
     ssa = [restructure(cinfo, i, ssa, ssa[i]) for i = 1:length(ssa)]
     binfo = blockinfo(ssa)
     
+    debuginfo && println("AFTER Restructure")
     debuginfo && debugprint(ssa, cinfo, binfo)
     
     

@@ -1,17 +1,22 @@
-import { assertEquals } from "https://deno.land/std@0.88.0/testing/asserts.ts";
 import webassembly from "./webassembly.js";
+import { assertEquals } from "https://deno.land/std@0.88.0/testing/asserts.ts";
 
-const wasm = await webassembly("wasm/test.wasm");
+const wasm = await webassembly("wasm/array.wasm");
+
+Deno.test(
+  "-------------------- array (builtin) --------------------",
+  () => {}
+);
 
 Deno.test("initial memory", () => {
   const total_allocated_bytes = wasm.intmem[0];
-  const gold = 4; //keep first int32 (4 bytes) of memory to count used memory
+  const gold = 4 * (1 + 282); //keep first int32 (4 bytes) of memory to count used memory and and tmp array
   assertEquals(total_allocated_bytes, gold);
 });
 
 Deno.test("store", () => {
   let byteptr = wasm.store([1, 2, 3]);
-  assertEquals(byteptr, 4);
+  assertEquals(byteptr, 4 * (1 + 282));
 
   //index into f32/i32 arrays (mem and intmem) by 32bit pointers (aka doubleword)
   //instead of 8bit pointers (aka byte)
@@ -86,9 +91,7 @@ Deno.test("copyview", () => {
   assertEquals([wasm.mem[i + 2], wasm.mem[i + 3], wasm.mem[i + 4]], [4, 5, 6]); //content is copied
 });
 
-Deno.test("--------------------", () => {
-  console.log("end of builtin tests");
-});
+Deno.test("-------------------- array --------------------", () => {});
 
 Deno.test("scalar addition", () => {
   const r = wasm.scalaradd(1.1, 2.4);

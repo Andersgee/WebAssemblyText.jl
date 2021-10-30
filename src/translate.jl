@@ -78,6 +78,13 @@ translate(i::Integer, ci::CodeInfo, item::SlotNumber) = "(local.get \$$(ci.slotn
 translate(i::Integer ,ci::CodeInfo, item::GlobalRef) = "call \$$(item.name)"
 translate(i::Integer ,ci::CodeInfo, item::NewvarNode) = nothing
 translate(i::Integer, ci::CodeInfo, item::Compiler.Const) = translate(i, ci, item.val)
+function translate(i::Integer, ci::CodeInfo, item::Core.ReturnNode)
+    a = translate(i, ci, item.val)
+    println("TRANSLATE a Core.ReturnNode, a: ",a)
+    
+    return "return $(translate(i, ci, item.val))"
+end
+
 function translate(i::Integer, ci::CodeInfo, item::TypedSlot)
     if isa(item.typ, Compiler.Const)
         return translate(i, ci, item.typ.val[1])
@@ -98,12 +105,16 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         return nothing
     
     # builtin to webassembly?
-    elseif is_floatop(ci, items)
+    elseif is_floatop_simple(ci, items)
         return ["$(floatops[items[1].name])"; translate(i, ci, items[2:end])]
-    elseif is_intop(ci, items)
+    elseif is_intop_simple(ci, items)
         return ["$(intops[items[1].name])"; translate(i, ci, items[2:end])]
     
     # special expression?
+    elseif hasname(items[1], :(/)) && length(items)==3
+        # int/int must become floats and return float. ( float/float and div(int,int) are already taken care of with builtins)
+        return ["f32.div", "(f32.convert_i32_s", translate(i, ci, items[2]), ") (f32.convert_i32_s", translate(i, ci, items[3]),")"]
+
     
     elseif hasname(items[1], :(size)) && length(items)==3
         return ["call \$size$(items[3])"; translate(i, ci, items[2])]
@@ -154,7 +165,7 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
                 return ["i32.eqz", translate(i, ci, items[2])]
             end
         else
-            return ["i32.eq", translate(i, ci, items[2:3])]
+            return ["i32.eq"; translate(i, ci, items[2:3])]
         end
     # elseif hasname(items[1], :(=))
     #    slotname = ci.slotnames[items[2].id]
@@ -178,15 +189,41 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
         else
             return ["local.set \$$(slotname)", translate(i, ci, items[3])]
         end
+    elseif hasname(items[1], :(println))
+        if itemtype(ci, items[2]) <: String
+            w1,w2 = inlined_tmparray(items[2])
+            return [string(w1, w2, "(call \$console_log (i32.const 4))")] #concat strings
+        else
+            return ["(call \$console_log", translate(i, ci, items[2]), ")"]
+        end
+    elseif hasname(items[1], :(error))
+        if itemtype(ci, items[2]) <: String
+            w1,w2 = inlined_tmparray(items[2])
+            return [string(w1, w2, "(call \$console_error (i32.const 4))\n(unreachable)")] #concat strings
+        else
+            return ["(call \$console_error", translate(i, ci, items[2]), ")\n(unreachable)"]
+        end
+
     # default individual translation
     else
         return translate.((i,), (ci,), items)
     end
 end
 
+function inlined_tmparray(str::String)
+    #also write "unreachable" if throw() and maybe even abort function ("return" in wasm) if error() is called. 
+    #in julia, error is supposed to abort ececution in parent function aswell?
+
+    v = [Int32(c) for c in str] #convert ASCII/Unicode chars to i32
+    watstring1 = "(call \$setsize_tmp (i32.const $(length(v))) (i32.const 1))\n"
+    watstring2 = join(["(call \$setlinearindex_int_tmp (i32.const $x) (i32.const $i)) ;;$(Char(x))\n" for (i, x) in enumerate(v)], "")
+
+    return watstring1, watstring2
+end
+
 is_iterate(item) = isa(item, GlobalRef) && length(string(item.name)) >= 7 && string(item.name)[1:7] == "iterate"
-is_floatop(ci::CodeInfo, items) = isa(items[1], GlobalRef) && items[1].name in keys(floatops) && (hasitemtype(ci, items[2], AbstractFloat) || (length(items) > 2 && hasitemtype(ci, items[3], AbstractFloat)))
-is_intop(ci::CodeInfo, items) = isa(items[1], GlobalRef) && items[1].name in keys(intops) && (hasitemtype(ci, items[2], [Integer, Bool, Nothing]) || (length(items) > 2 && hasitemtype(ci, items[3], [Integer, Bool, Nothing])))
+is_floatop_simple(ci::CodeInfo, items) = isa(items[1], GlobalRef) && items[1].name in keys(floatops) && (hasitemtype(ci, items[2], AbstractFloat) || (length(items) > 2 && hasitemtype(ci, items[3], AbstractFloat)))
+is_intop_simple(ci::CodeInfo, items) = isa(items[1], GlobalRef) && items[1].name in keys(intops) && (hasitemtype(ci, items[2], [Integer, Bool, Nothing]) || (length(items) > 2 && hasitemtype(ci, items[3], [Integer, Bool, Nothing])))
 
 floatops = Dict(
 :(+) => "f32.add", # these consume 2 args 
@@ -222,8 +259,9 @@ intops = Dict(
 :(-) => "i32.sub",
 :(*) => "i32.mul",
 :(div) => "i32.div_s", # julia 4/2 will return float. but div(4,2) wont
+# :(/) => "i32.div_s", # julia 4/2 will return float. but div(4,2) wont
 :(%) => "i32.rem_s",
-:(%) => "i32.rem_s",
+:(mod) => "i32.rem_s",
 :(rem) => "i32.rem_s",
 :(&&) => "i32.and",
 :(||) => "i32.or",

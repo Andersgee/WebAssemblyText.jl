@@ -12,9 +12,11 @@ webassemblytext = translate(structure(code_typed(somejuliafunction))
 # Details:
 - Expressions dont always have the operator in head, sometimes its in args[1] and head is just :call
 - pi et al are refs, so if eval(item) is a number just use the number instead of the ref
+- Const can hold anything inside it, use the value instead of the container
 """
 structure(items::Array) = structure.(items)
 structure(item) = item
+structure(item::Core.Const) = item.val
 function structure(item::Expr)
     if item.head == :(call)
         head = item.args[1]
@@ -54,6 +56,8 @@ restructure(ci::CodeInfo, i::Integer, ssa::Array, item) = item
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item::GotoNode) = Any[Expr(:(goto), item.label)]
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item::GotoIfNot) = [Expr(:(gotoif), item.dest), ["i32.eqz"; item.cond]]
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item::ReturnNode) = Any[Symbol("return"), item.val]
+
+
 
 function restructure(ci::CodeInfo, i::Integer, ssa::Array, items::Array)
     if length(items) > 3 && hasname(items[1], keys(floatops))

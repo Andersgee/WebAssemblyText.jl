@@ -1,7 +1,7 @@
-import { assertEquals } from "https://deno.land/std@0.88.0/testing/asserts.ts";
 import webassembly from "./webassembly.js";
+import { assertEquals } from "https://deno.land/std@0.88.0/testing/asserts.ts";
 
-const wasm = await webassembly("wasm/ops.wasm");
+const wasm = await webassembly("wasm/floatops.wasm");
 
 //gold is what julia would return, but by casting to f32 and back to f64
 //
@@ -11,9 +11,7 @@ const wasm = await webassembly("wasm/ops.wasm");
 // julia> gold = convert(Float64, a-b)
 // julia> -0.7999999523162842
 
-Deno.test("--------------------", () => {
-  console.log("float ops");
-});
+Deno.test("-------------------- floatops --------------------", () => {});
 
 const a = 2.4;
 const b = 3.2;

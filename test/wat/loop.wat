@@ -1,3 +1,67 @@
+(module(memory (import "imports" "memory") 1)
+
+(func $console_log (import "imports" "console_log") (param $ptr i32))
+(func $console_warn (import "imports" "console_warn") (param $ptr i32))
+(func $console_error (import "imports" "console_error") (param $ptr i32))
+(func $rand (import "imports" "rand") (result f32))
+(func $cos (import "imports" "cos") (param $a f32) (result f32))
+(func $log (import "imports" "log") (param $a f32) (result f32))
+(func $^ (import "imports" "^") (param $a f32) (param $b f32) (result f32))
+
+
+(func $_unitrange (export "_unitrange") (param $start i32) (param $stop i32) (result f32) 
+ (local $_4 i32) (local $s f32) (local $i i32) (local $_4i i32)
+( local.set $s (f32.const 0.0) )
+( local.set $_4 ( local.set $_4i ( call $iterateunitrange_init (local.get $start) (local.get $stop) ) ) )
+(block ( br_if 0 ( i32.eqz ( i32.eqz ( i32.eqz (local.get $_4i) ) ) ) )
+(loop
+( local.set $i (local.get $_4) )
+(local.get $_4i)
+( local.set $s  ( f32.add (local.get $s) (f32.const 2.1) )  )
+( local.set $_4 ( local.set $_4i ( call $iterateunitrange (local.get $start) (local.get $stop) (local.get $_4) ) ) )
+( br_if 1 ( i32.eqz ( i32.eqz ( i32.eqz (local.get $_4i) ) ) ) )
+(br 0)
+) ) ( return (local.get $s) ))
+
+(func $_while (export "_while") (param $n i32) (result f32) 
+ (local $i i32) (local $s f32)
+( local.set $s (f32.const 0.0) )
+( local.set $i (i32.const 1) )
+(block (loop
+( br_if 1 ( i32.eqz ( i32.lt_s (local.get $i) (local.get $n) ) ) )
+( local.set $s  ( f32.add (local.get $s) (f32.const 2.1) )  )
+( local.set $i  ( i32.add (local.get $i) (i32.const 1) )  )
+(br 0)
+) ) ( return (local.get $s) ))
+
+(func $_steprange (export "_steprange") (param $start i32) (param $step i32) (param $stop i32) (result f32) 
+ (local $_5 i32) (local $s f32) (local $i i32) (local $_5i i32)
+( local.set $s (f32.const 0.0) )
+( local.set $_5 ( local.set $_5i ( call $iteratesteprange_init (local.get $start) (local.get $step) (local.get $stop) ) ) )
+(block ( br_if 0 ( i32.eqz ( i32.eqz ( i32.eqz (local.get $_5i) ) ) ) )
+(loop
+( local.set $i (local.get $_5) )
+(local.get $_5i)
+( local.set $s  ( f32.add (local.get $s) (f32.const 2.1) )  )
+( local.set $_5 ( local.set $_5i ( call $iteratesteprange (local.get $start) (local.get $step) (local.get $stop) (local.get $_5) ) ) )
+( br_if 1 ( i32.eqz ( i32.eqz ( i32.eqz (local.get $_5i) ) ) ) )
+(br 0)
+) ) ( return (local.get $s) ))
+
+(func $_unitrange2 (export "_unitrange2") (param $start i32) (param $stop i32) (result f32) 
+ (local $_4 i32) (local $s f32) (local $i i32) (local $_4i i32)
+( local.set $s (f32.const 0.0) )
+( local.set $_4 ( local.set $_4i ( call $iterateunitrange_init (local.get $start) (local.get $stop) ) ) )
+(block ( br_if 0 ( i32.eqz ( i32.eqz ( i32.eqz (local.get $_4i) ) ) ) )
+(loop
+( local.set $i (local.get $_4) )
+(local.get $_4i)
+( local.set $s  ( f32.add ( f32.convert_i32_s (local.get $i) ) ( f32.add (local.get $s) (f32.const 2.1) ) )  )
+( local.set $_4 ( local.set $_4i ( call $iterateunitrange (local.get $start) (local.get $stop) (local.get $_4) ) ) )
+( br_if 1 ( i32.eqz ( i32.eqz ( i32.eqz (local.get $_4i) ) ) ) )
+(br 0)
+) ) ( return (local.get $s) ))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; handwritten webassembly builtins below here (unused will be discarded)    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -245,4 +309,6 @@
   (local.set $M (i32.const 4)) ;;the temporary array
   (i32.store (local.get $M) (local.get $i))
   (i32.store (i32.add (local.get $M) (i32.const 4)) (local.get $j))
+)
+
 )

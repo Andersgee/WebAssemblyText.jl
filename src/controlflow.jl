@@ -134,13 +134,14 @@ function addblocks(bi::BlockInfo, wat::Array)
     blocks = [[] for _ = 1:length(wat)]
     backtargets = values(filter(kv -> kv[2] < kv[1], bi.gotos)) # v<k means backjump (target less than origin)
     for (i, targets) in enumerate(bi.parents)
+        
         for (level, target) in enumerate(targets)
-            prevmaxlevel = length(bi.parents[i - 1])
+            prevmaxlevel = i==1 ? 0 : length(bi.parents[i - 1]) # bi.parents[i - 1] doesnt work if i==1 (happens when function starts with a block)
             nextmaxlevel = length(bi.parents[i + 1])
             if prevmaxlevel < level || bi.parents[i - 1][level] != target
                 target in backtargets ? push!(blocks[i], "(loop") : push!(blocks[i], "(block")
             elseif nextmaxlevel < level || bi.parents[i + 1][level] != target
-                target in backtargets ? push!(blocks[i + 1], ")") : push!(blocks[i], ")") # loop end at end of line i aka first at i+1
+                target in backtargets ? pushfirst!(blocks[i + 1], ")") : push!(blocks[i], ")") # loop end at end of line i aka first at i+1
             end
         end
     end

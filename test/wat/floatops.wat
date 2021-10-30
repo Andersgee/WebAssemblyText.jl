@@ -1,3 +1,101 @@
+(module(memory (import "imports" "memory") 1)
+
+(func $console_log (import "imports" "console_log") (param $ptr i32))
+(func $console_warn (import "imports" "console_warn") (param $ptr i32))
+(func $console_error (import "imports" "console_error") (param $ptr i32))
+(func $rand (import "imports" "rand") (result f32))
+(func $cos (import "imports" "cos") (param $a f32) (result f32))
+(func $log (import "imports" "log") (param $a f32) (result f32))
+(func $^ (import "imports" "^") (param $a f32) (param $b f32) (result f32))
+
+
+(func $ops (export "ops") (param $a f32) (param $b f32)
+( call $add (local.get $a) (local.get $b) )
+( call $sub (local.get $a) (local.get $b) )
+( call $mul (local.get $a) (local.get $b) )
+( call $div (local.get $a) (local.get $b) )
+( call $eq (local.get $a) (local.get $b) )
+( call $ne (local.get $a) (local.get $b) )
+( call $lt (local.get $a) (local.get $b) )
+( call $gt (local.get $a) (local.get $b) )
+( call $le (local.get $a) (local.get $b) )
+( call $ge (local.get $a) (local.get $b) )
+( call $_min (local.get $a) (local.get $b) )
+( call $_max (local.get $a) (local.get $b) )
+( call $_copysign (local.get $a) (local.get $b) )
+( call $_abs (local.get $a) )
+( call $_ceil (local.get $a) )
+( call $_floor (local.get $a) )
+( call $_trunc (local.get $a) )
+( call $_round (local.get $a) )
+( call $_sqrt (local.get $a) )
+( call $_float (i32.const 3) )
+( call $_Int (local.get $a) )
+return)
+
+(func $_floor (export "_floor") (param $a f32) (result f32)
+( return ( f32.floor (local.get $a) ) ))
+
+(func $add (export "add") (param $a f32) (param $b f32) (result f32)
+( return ( f32.add (local.get $a) (local.get $b) ) ))
+
+(func $_abs (export "_abs") (param $a f32) (result f32)
+( return ( f32.abs (local.get $a) ) ))
+
+(func $le (export "le") (param $a f32) (param $b f32) (result i32)
+( return ( f32.le (local.get $a) (local.get $b) ) ))
+
+(func $ne (export "ne") (param $a f32) (param $b f32) (result i32)
+( return ( f32.ne (local.get $a) (local.get $b) ) ))
+
+(func $_Int (export "_Int") (param $a f32) (result i32)
+( return ( i32.trunc_f32_s (local.get $a) ) ))
+
+(func $gt (export "gt") (param $a f32) (param $b f32) (result i32)
+( return ( f32.gt (local.get $a) (local.get $b) ) ))
+
+(func $sub (export "sub") (param $a f32) (param $b f32) (result f32)
+( return ( f32.sub (local.get $a) (local.get $b) ) ))
+
+(func $div (export "div") (param $a f32) (param $b f32) (result f32)
+( return ( f32.div (local.get $a) (local.get $b) ) ))
+
+(func $_float (export "_float") (param $c i32) (result f32)
+( return ( f32.convert_i32_s (local.get $c) ) ))
+
+(func $ge (export "ge") (param $a f32) (param $b f32) (result i32)
+( return ( f32.ge (local.get $a) (local.get $b) ) ))
+
+(func $_round (export "_round") (param $a f32) (result f32)
+( return ( f32.nearest (local.get $a) ) ))
+
+(func $_copysign (export "_copysign") (param $a f32) (param $b f32) (result f32)
+( return ( f32.copysign (local.get $a) (local.get $b) ) ))
+
+(func $_max (export "_max") (param $a f32) (param $b f32) (result f32)
+( return ( f32.max (local.get $a) (local.get $b) ) ))
+
+(func $lt (export "lt") (param $a f32) (param $b f32) (result i32)
+( return ( f32.lt (local.get $a) (local.get $b) ) ))
+
+(func $eq (export "eq") (param $a f32) (param $b f32) (result i32)
+( return ( f32.eq (local.get $a) (local.get $b) ) ))
+
+(func $mul (export "mul") (param $a f32) (param $b f32) (result f32)
+( return ( f32.mul (local.get $a) (local.get $b) ) ))
+
+(func $_ceil (export "_ceil") (param $a f32) (result f32)
+( return ( f32.ceil (local.get $a) ) ))
+
+(func $_trunc (export "_trunc") (param $a f32) (result f32)
+( return ( f32.trunc (local.get $a) ) ))
+
+(func $_sqrt (export "_sqrt") (param $a f32) (result f32)
+( return ( f32.sqrt (local.get $a) ) ))
+
+(func $_min (export "_min") (param $a f32) (param $b f32) (result f32)
+( return ( f32.min (local.get $a) (local.get $b) ) ))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; handwritten webassembly builtins below here (unused will be discarded)    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -245,4 +343,6 @@
   (local.set $M (i32.const 4)) ;;the temporary array
   (i32.store (local.get $M) (local.get $i))
   (i32.store (i32.add (local.get $M) (i32.const 4)) (local.get $j))
+)
+
 )

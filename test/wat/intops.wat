@@ -1,97 +1,123 @@
 (module(memory (import "imports" "memory") 1)
 
+(func $console_log (import "imports" "console_log") (param $ptr i32))
+(func $console_warn (import "imports" "console_warn") (param $ptr i32))
+(func $console_error (import "imports" "console_error") (param $ptr i32))
 (func $rand (import "imports" "rand") (result f32))
 (func $cos (import "imports" "cos") (param $a f32) (result f32))
 (func $log (import "imports" "log") (param $a f32) (result f32))
 (func $^ (import "imports" "^") (param $a f32) (param $b f32) (result f32))
 
 
-(func $ops (export "ops") (param $a f32) (param $b f32)
+(func $ops (export "ops") (param $a i32) (param $b i32) 
+ (local $f i32) (local $t i32)
 ( call $add (local.get $a) (local.get $b) )
 ( call $sub (local.get $a) (local.get $b) )
 ( call $mul (local.get $a) (local.get $b) )
-( call $div (local.get $a) (local.get $b) )
-( call $eq (local.get $a) (local.get $b) )
-( call $ne (local.get $a) (local.get $b) )
-( call $lt (local.get $a) (local.get $b) )
-( call $gt (local.get $a) (local.get $b) )
-( call $le (local.get $a) (local.get $b) )
-( call $ge (local.get $a) (local.get $b) )
-( call $_min (local.get $a) (local.get $b) )
-( call $_max (local.get $a) (local.get $b) )
-( call $_copysign (local.get $a) (local.get $b) )
-( call $_abs (local.get $a) )
-( call $_ceil (local.get $a) )
-( call $_floor (local.get $a) )
-( call $_trunc (local.get $a) )
-( call $_round (local.get $a) )
-( call $_sqrt (local.get $a) )
-( call $_float (i32.const 3) )
-( call $_Int (local.get $a) )
+( call $_div (local.get $a) (local.get $b) )
+( call $_div2 (local.get $a) (local.get $b) )
+( call $_shl (local.get $a) (local.get $b) )
+( call $_shr (local.get $a) (local.get $b) )
+( call $_eq (local.get $a) (local.get $b) )
+( call $_egal (local.get $a) (local.get $b) )
+( call $_ne (local.get $a) (local.get $b) )
+( call $_lt (local.get $a) (local.get $b) )
+( call $_gt (local.get $a) (local.get $b) )
+( call $_le (local.get $a) (local.get $b) )
+( call $_ge (local.get $a) (local.get $b) )
+( call $_leading_zeros (local.get $a) )
+( call $_trailing_zeros (local.get $a) )
+( call $_count_ones (local.get $a) )
+( call $_float (local.get $a) )
+( call $_mod (local.get $a) (local.get $b) )
+( call $_mod2 (local.get $a) (local.get $b) )
+( local.set $t (i32.const 1) )
+( local.set $f (i32.const 0) )
+( call $_and (i32.const 1) (i32.const 0) )
+( call $_or (i32.const 1) (i32.const 0) )
+( call $_xor (i32.const 1) (i32.const 0) )
+( call $_xor2 (i32.const 1) (i32.const 0) )
+( call $_not (i32.const 1) )
 return)
 
-(func $_floor (export "_floor") (param $a f32) (result f32)
-( return ( f32.floor (local.get $a) ) ))
+(func $_gt (export "_gt") (param $a i32) (param $b i32) (result i32)
+( return ( i32.gt_s (local.get $a) (local.get $b) ) ))
 
-(func $add (export "add") (param $a f32) (param $b f32) (result f32)
-( return ( f32.add (local.get $a) (local.get $b) ) ))
+(func $_ne (export "_ne") (param $a i32) (param $b i32) (result i32)
+( return ( i32.ne (local.get $a) (local.get $b) ) ))
 
-(func $_abs (export "_abs") (param $a f32) (result f32)
-( return ( f32.abs (local.get $a) ) ))
+(func $add (export "add") (param $a i32) (param $b i32) (result i32)
+( return ( i32.add (local.get $a) (local.get $b) ) ))
 
-(func $le (export "le") (param $a f32) (param $b f32) (result i32)
-( return ( f32.le (local.get $a) (local.get $b) ) ))
+(func $_trailing_zeros (export "_trailing_zeros") (param $a i32) (result i32)
+( return ( i32.ctz (local.get $a) ) ))
 
-(func $ne (export "ne") (param $a f32) (param $b f32) (result i32)
-( return ( f32.ne (local.get $a) (local.get $b) ) ))
+(func $_mod2 (export "_mod2") (param $a i32) (param $b i32) (result i32)
+( return ( i32.rem_s (local.get $a) (local.get $b) ) ))
 
-(func $_Int (export "_Int") (param $a f32) (result i32)
-( return ( i32.trunc_f32_s (local.get $a) ) ))
+(func $_leading_zeros (export "_leading_zeros") (param $a i32) (result i32)
+( return ( i32.clz (local.get $a) ) ))
 
-(func $gt (export "gt") (param $a f32) (param $b f32) (result i32)
-( return ( f32.gt (local.get $a) (local.get $b) ) ))
+(func $_shr (export "_shr") (param $a i32) (param $b i32) (result i32)
+( return ( i32.shr_s (local.get $a) (local.get $b) ) ))
 
-(func $sub (export "sub") (param $a f32) (param $b f32) (result f32)
-( return ( f32.sub (local.get $a) (local.get $b) ) ))
+(func $_egal (export "_egal") (param $a i32) (param $b i32) (result i32)
+( return ( i32.eq (local.get $a) (local.get $b) ) ))
 
-(func $div (export "div") (param $a f32) (param $b f32) (result f32)
-( return ( f32.div (local.get $a) (local.get $b) ) ))
+(func $_eq (export "_eq") (param $a i32) (param $b i32) (result i32)
+( return ( i32.eq (local.get $a) (local.get $b) ) ))
 
-(func $_float (export "_float") (param $c i32) (result f32)
-( return ( f32.convert_i32_s (local.get $c) ) ))
+(func $_div (export "_div") (param $a i32) (param $b i32) (result i32)
+( return ( i32.div_s (local.get $a) (local.get $b) ) ))
 
-(func $ge (export "ge") (param $a f32) (param $b f32) (result i32)
-( return ( f32.ge (local.get $a) (local.get $b) ) ))
+(func $_le (export "_le") (param $a i32) (param $b i32) (result i32)
+( return ( i32.le_s (local.get $a) (local.get $b) ) ))
 
-(func $_round (export "_round") (param $a f32) (result f32)
-( return ( f32.nearest (local.get $a) ) ))
+(func $_not (export "_not") (param $a i32) (result i32)
+( return ( i32.eqz (local.get $a) ) ))
 
-(func $_copysign (export "_copysign") (param $a f32) (param $b f32) (result f32)
-( return ( f32.copysign (local.get $a) (local.get $b) ) ))
+(func $sub (export "sub") (param $a i32) (param $b i32) (result i32)
+( return ( i32.sub (local.get $a) (local.get $b) ) ))
 
-(func $_max (export "_max") (param $a f32) (param $b f32) (result f32)
-( return ( f32.max (local.get $a) (local.get $b) ) ))
+(func $_div2 (export "_div2") (param $a i32) (param $b i32) (result f32)
+( return ( f32.div (f32.convert_i32_s (local.get $a) ) (f32.convert_i32_s (local.get $b) ) ) ))
 
-(func $lt (export "lt") (param $a f32) (param $b f32) (result i32)
-( return ( f32.lt (local.get $a) (local.get $b) ) ))
+(func $_float (export "_float") (param $a i32) (result f32)
+( return ( f32.convert_i32_s (local.get $a) ) ))
 
-(func $eq (export "eq") (param $a f32) (param $b f32) (result i32)
-( return ( f32.eq (local.get $a) (local.get $b) ) ))
+(func $_xor (export "_xor") (param $a i32) (param $b i32) (result i32)
+( return ( i32.xor (local.get $a) (local.get $b) ) ))
 
-(func $mul (export "mul") (param $a f32) (param $b f32) (result f32)
-( return ( f32.mul (local.get $a) (local.get $b) ) ))
+(func $_lt (export "_lt") (param $a i32) (param $b i32) (result i32)
+( return ( i32.lt_s (local.get $a) (local.get $b) ) ))
 
-(func $_ceil (export "_ceil") (param $a f32) (result f32)
-( return ( f32.ceil (local.get $a) ) ))
+(func $_shl (export "_shl") (param $a i32) (param $b i32) (result i32)
+( return ( i32.shl (local.get $a) (local.get $b) ) ))
 
-(func $_trunc (export "_trunc") (param $a f32) (result f32)
-( return ( f32.trunc (local.get $a) ) ))
+(func $_xor2 (export "_xor2") (param $a i32) (param $b i32) (result i32)
+( return ( i32.xor (local.get $a) (local.get $b) ) ))
 
-(func $_sqrt (export "_sqrt") (param $a f32) (result f32)
-( return ( f32.sqrt (local.get $a) ) ))
+(func $_mod (export "_mod") (param $a i32) (param $b i32) (result i32)
+( return ( i32.rem_s (local.get $a) (local.get $b) ) ))
 
-(func $_min (export "_min") (param $a f32) (param $b f32) (result f32)
-( return ( f32.min (local.get $a) (local.get $b) ) ))
+(func $_ge (export "_ge") (param $a i32) (param $b i32) (result i32)
+( return ( i32.ge_s (local.get $a) (local.get $b) ) ))
+
+(func $mul (export "mul") (param $a i32) (param $b i32) (result i32)
+( return ( i32.mul (local.get $a) (local.get $b) ) ))
+
+(func $_count_ones (export "_count_ones") (param $a i32) (result i32)
+( return ( i32.popcnt (local.get $a) ) ))
+
+(func $_or (export "_or") (param $a i32) (param $b i32) (result i32)
+(block ( br_if 0 ( i32.eqz (local.get $a) ) )
+( return (local.get $a) )
+) ( return (local.get $b) ))
+
+(func $_and (export "_and") (param $a i32) (param $b i32) (result i32)
+(block ( br_if 0 ( i32.eqz (local.get $a) ) )
+( return (local.get $b) )
+) ( return (i32.const 0) ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; handwritten webassembly builtins below here (unused will be discarded)    ;;
@@ -110,6 +136,15 @@ return)
 ;; M[i] = memory[M + 4 + 4*i] =  memory[M + 4*(1+i)]                         ;;
 ;; Ḿ[i,j] = memory[M + 4 + 4*(i + (j-1)*size(M,1))]                          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;allocate some initial memory for counting used memory and holding temporary arrays
+;;memory[0] is supposed to always point to the first currently un-allocated memory
+;;so initial memory[0] = 
+(func $allocate_init (export "allocate_init")
+  (local $tmplen i32)
+  (local.set $tmplen (i32.const 282)) ;;max length of any temporary array (mostly used for console.log("my string") without allocation). Lets do 280 like twitter because why not
+  (i32.store (i32.const 0) (call $mul4 (i32.add (i32.const 1) (local.get $tmplen) )))
+)
 
 (func $mul4 (param $i i32) (result i32)
   (i32.shl (local.get $i) (i32.const 2))
@@ -137,11 +172,6 @@ return)
 (func $setsize (export "setsize") (param $M i32) (param $i i32) (param $j i32)
   (i32.store (local.get $M) (local.get $i))
   (i32.store (i32.add (local.get $M) (i32.const 4)) (local.get $j))
-)
-
-;;keep first index to count used memory
-(func $allocate_init (export "allocate_init")
-  (i32.store (i32.const 0) (i32.const 4))
 )
 
 ;;add 8+4*len to mem[0], return what mem[0] was before
@@ -314,4 +344,28 @@ return)
 (func $zero (param $M i32) (result i32)
   (call $zeros (call $size1 (local.get $M)) (call $size2 (local.get $M)))
 )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; temporary arrays
+
+;;same as setlinearindex_int but always use the pre-allocated temporary array
+(func $setlinearindex_int_tmp (param $x i32) (param $i i32)
+  (local $M i32)
+  (local.set $M (i32.const 4)) ;;the temporary array
+  (call $setlinearindex_int (local.get $M) (local.get $x) (local.get $i))
+)
+
+(func $setlinearindex_tmp (param $x f32) (param $i i32)
+  (local $M i32)
+  (local.set $M (i32.const 4)) ;;the temporary array
+  (call $setlinearindex (local.get $M) (local.get $x) (local.get $i))
+)
+
+(func $setsize_tmp (param $i i32) (param $j i32)
+  (local $M i32)
+  (local.set $M (i32.const 4)) ;;the temporary array
+  (i32.store (local.get $M) (local.get $i))
+  (i32.store (i32.add (local.get $M) (i32.const 4)) (local.get $j))
+)
+
 )

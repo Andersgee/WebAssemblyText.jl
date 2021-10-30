@@ -4,19 +4,16 @@ on:
   - pull_request
 jobs:
   denotest:
-    name: denotest
+    name: WebAssembly Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: denoland/setup-deno@v1
         with:
           deno-version: v1.x
-      - name: wasm floatops tests
+      - name: deno test
         working-directory: ./test
-        run: deno test --allow-read deno-test/floatops.js
-      - name: wasm matrix tests
-        working-directory: ./test
-        run: deno test --allow-read deno-test/test.js
+        run: deno test --allow-read ./deno-test
   juliatest:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}

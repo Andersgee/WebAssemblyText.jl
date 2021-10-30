@@ -1,7 +1,22 @@
 export default async function webassembly(path) {
+  //default 1 page of memory. Call wasm.requiredpages() after storing data for appropriate number here.
+  const memory = new WebAssembly.Memory({ initial: 1, maximum: 1 });
+
+  const ptr2string = (ptr) => {
+    const sz = new Int32Array(memory.buffer, ptr, 2);
+    const len = sz[0] * sz[1];
+    const int32array = new Int32Array(memory.buffer, ptr + 8, len);
+    let strarray = [];
+    int32array.forEach((x) => strarray.push(String.fromCharCode(x)));
+    return strarray.join("");
+  };
+
   const imports = {
-    memory: new WebAssembly.Memory({ initial: 1, maximum: 1 }), //default 1 page of memory. Call wasm.requiredpages() after storing data for appropriate number here.
+    memory: memory,
     println: (x) => console.log(x),
+    console_log: (ptr) => console.log(ptr2string(ptr)),
+    console_warn: (ptr) => console.warn(ptr2string(ptr)),
+    console_error: (ptr) => console.error(ptr2string(ptr)),
     "^": (a, p) => Math.pow(a, p),
     rand: (a) => Math.random(a),
     atan2: (a, b) => Math.atan2(a, b),
@@ -25,6 +40,7 @@ export default async function webassembly(path) {
     log10: (a) => Math.log10(a),
     log2: (a) => Math.log2(a),
     sign: (a) => Math.sign(a),
+    rem: (a, n) => a % n,
   };
 
   const readWasm = await Deno.readFile(path);
