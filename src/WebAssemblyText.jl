@@ -26,6 +26,6 @@ include("debug.jl")
 include("parse.jl")
 include("jl2wat.jl")
 
-export jl2wat, jlstring2wat, @code_wat
+export jl2wat, jlstring2wat, jlstring2wat_barebone, @code_wat
 
 end

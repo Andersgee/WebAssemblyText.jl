@@ -40,7 +40,7 @@ julia> println(wat)
 )
 ```
 """
-function jlstring2wat(str::AbstractString; debuginfo::Bool=false)
+function jlstring2wat(str::AbstractString; debuginfo::Bool=false, barebone::Bool=false)
     try
         result = Base.eval(Evalscope, Meta.parse("begin $str end"))
     catch e
@@ -66,6 +66,11 @@ function jlstring2wat(str::AbstractString; debuginfo::Bool=false)
             processed[func] = true
         end
     end
+
+    if (barebone)
+        #Dont add on the stuff that would make it compileable.
+        return joinn(WATs)
+    end
     
     # WATs = joinn([getimports(imports); WATs; getbuiltins(SSAs)...])
     WATs = joinn([getimports(imports); WATs; getallbuiltins()])
@@ -77,7 +82,7 @@ function jlstring2wat(str::AbstractString; debuginfo::Bool=false)
     (func $cos (import "imports" "cos") (param $a f32) (result f32))
     (func $log (import "imports" "log") (param $a f32) (result f32))
     (func $^ (import "imports" "^") (param $a f32) (param $b f32) (result f32))"""
-    return """(module$memoryimport\n\n$default_jsimports\n$WATs\n)"""
+    return """(module\n$memoryimport\n\n$default_jsimports\n$WATs\n)"""
 end
 
 getallbuiltins() = open(f -> read(f, String), joinpath(@__DIR__, "builtins.wat"))
@@ -151,4 +156,15 @@ function code_wat(func, args)
 
     ssa, wat = process(func, funcs, argtypes, imports)
     return println(wat)
+end
+
+
+
+"""
+    jlstring2wat_barebone(str::AbstractString)
+
+Same as jlstring2wat but without adding on imports and builtins.
+"""
+function jlstring2wat_barebone(str::AbstractString; debuginfo::Bool=false)
+    return jlstring2wat(str; debuginfo=debuginfo, barebone=true )
 end
