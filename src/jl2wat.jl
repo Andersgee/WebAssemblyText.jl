@@ -44,7 +44,10 @@ function jlstring2wat(str::AbstractString; debuginfo::Bool=false, barebone::Bool
     try
         result = Base.eval(Evalscope, Meta.parse("begin $str end"))
     catch e
-        return e
+        #return e
+        errorstring = "$(typeof(e)): $(e.msg)"
+        println(errorstring)
+        return errorstring 
     end
     
     funcs, argtypes, imports = blockparse(str)
