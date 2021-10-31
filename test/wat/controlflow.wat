@@ -1,4 +1,5 @@
-(module(memory (import "imports" "memory") 1)
+(module
+(memory (import "imports" "memory") 1)
 
 (func $console_log (import "imports" "console_log") (param $ptr i32))
 (func $console_warn (import "imports" "console_warn") (param $ptr i32))
@@ -7,8 +8,8 @@
 (func $cos (import "imports" "cos") (param $a f32) (result f32))
 (func $log (import "imports" "log") (param $a f32) (result f32))
 (func $^ (import "imports" "^") (param $a f32) (param $b f32) (result f32))
-(func $println (import "imports" "println") (param $a i32))
 (func $error (import "imports" "error") (param $a i32))
+(func $println (import "imports" "println") (param $a i32))
 
 (func $_ternary (export "_ternary") (param $x i32) (param $y i32) (result i32)
 (block ( br_if 0 ( i32.eqz ( i32.lt_s (local.get $x) (local.get $y) ) ) )

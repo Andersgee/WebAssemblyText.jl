@@ -1,4 +1,5 @@
-(module(memory (import "imports" "memory") 1)
+(module
+(memory (import "imports" "memory") 1)
 
 (func $console_log (import "imports" "console_log") (param $ptr i32))
 (func $console_warn (import "imports" "console_warn") (param $ptr i32))

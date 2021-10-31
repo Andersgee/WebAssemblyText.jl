@@ -42,7 +42,7 @@ julia> println(wat)
 """
 function jlstring2wat(str::AbstractString; debuginfo::Bool=false, barebone::Bool=false)
     try
-        result = Base.eval(Evalscope, Meta.parse("begin $str end"))
+        result = Base.eval(Evalscope, Meta.parse("begin $str\n end"))
     catch e
         #return e
         errorstring = "$(typeof(e)): $(e.msg)"
@@ -113,9 +113,8 @@ function process(func, funcs, argtypes, imports; debuginfo::Bool=false)
     ssa = [restructure(cinfo, i, ssa, ssa[i]) for i = 1:length(ssa)]
     binfo = blockinfo(ssa)
     
-    debuginfo && println("AFTER Restructure")
-    debuginfo && debugprint(ssa, cinfo, binfo)
-    
+    debuginfo && println("---------- $func (after restructure) ----------")
+    debuginfo && debugprint(ssa, cinfo, binfo, Rtype)
     
     argtypes!(cinfo, argtypes, funcs, ssa)
     imports!(imports, cinfo, funcs, builtinfuncs, ssa)

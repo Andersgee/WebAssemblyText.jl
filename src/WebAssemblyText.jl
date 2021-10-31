@@ -2,7 +2,7 @@ module WebAssemblyText
 
 using Core: Compiler, SSAValue, SlotNumber, TypedSlot, GotoNode, CodeInfo, NewvarNode
 using Core.Compiler: GotoIfNot, PartialStruct
-using Core: ReturnNode
+using Core: ReturnNode, Const
 
 """
 Evalscope is a dummy module where all evaluated expressions live.
@@ -17,6 +17,7 @@ end
 include("structure.jl")
 include("itemtype.jl")
 include("utils.jl")
+include("declaration.jl")
 include("translate.jl")
 include("controlflow.jl")
 include("stringify.jl")

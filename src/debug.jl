@@ -1,6 +1,6 @@
-function debugprint(ssa, cinfo, binfo)
-    display(cinfo)
-    debugprintssa(ssa, cinfo)
+function debugprint(ssa, cinfo, binfo, Rtype)
+    #@show cinfo
+    debugprintssa(ssa, cinfo, Rtype)
     debugprintblockinfo(binfo)
 end
 printslots(ci) = [println("_$i:  $(ci.slotnames[i])  $(ci.slottypes[i])") for i = 1:length(ci.slotnames)];
@@ -10,7 +10,8 @@ printssatypes(ssa,ci) = [println("$(ci.ssavaluetypes[i])\t%$i:  ", itemname(ssa[
 itemname(item) = isa(item, GlobalRef) ? item.name : item
 itemname(item::Array) = itemname.(item)
 
-function debugprintssa(ssa, ci)
+function debugprintssa(ssa, ci, Rtype)
+    println("\nRtype:", Rtype)
     println("\nSlots:")
     printslots(ci)
     println("\nSSA:")
@@ -19,13 +20,17 @@ function debugprintssa(ssa, ci)
 end
 
 function debugprintblockinfo(binfo)
-    println("Inferred blocktree (parents of each ssa index):")
-    for (i, v) in enumerate(binfo.parents)
-        if length(v) > 0
-            println(i, ": ", v)
-        else
-            println(i, ": ")
+    hasanyblocks = sum(length.(binfo.parents))>0
+    if (hasanyblocks)
+
+        println("Inferred blocktree (parents of each ssa index):")    
+        for (i, v) in enumerate(binfo.parents)
+            if length(v) > 0
+                println(i, ": ", v)
+            else
+                println(i, ": ")
+            end
         end
+        println()
     end
-    println()
 end

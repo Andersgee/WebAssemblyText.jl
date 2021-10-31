@@ -9,7 +9,7 @@ Initial Meta.parse() on entire input. return funcs and initialize Dicts of argty
 - imports: a dict with with function,importstring as key,values
 """
 function blockparse(str::String)
-    block = pruneLineNumberNode(Meta.parse("begin $str end").args)
+    block = pruneLineNumberNode(Meta.parse("begin $str\n end").args)
     funcs = Dict(blockfuncnames(block) .=> blockfuncexpressions(block))
     argtypes = Dict()
     imports = Dict()
@@ -56,7 +56,7 @@ function codeinfo(func, argtypes::Array)
     ct = code_typed(Base.eval(Evalscope, func), Tuple{argtypes...}; optimize=false, debuginfo=:none)[1] # none, source
     cinfo = ct[1]
     Rtype = ct[2]
-    
+
     for (i, st) in enumerate(cinfo.slottypes)
         if isa(st, Union) 
             # iterator variables are union of [nothing, [value,index]]
@@ -64,7 +64,7 @@ function codeinfo(func, argtypes::Array)
             cinfo.slottypes[i] = getfield(st, 2).parameters[1]
             push!(cinfo.slotnames, Symbol("_$(i)i"))
             push!(cinfo.slottypes, getfield(st, 2).parameters[2])
-        elseif !isa(st, Compiler.Const) && length(st.parameters) > 1 && istuple(st)
+        elseif !isa(st, Const) && length(st.parameters) > 1 && istuple(st)
             # wasm can now return multiple values, but tuples dont exist
             # so create individual variables representing the tuple parameters 
             # (but keep the "incorrect" tuple type of the original tuple slot)
@@ -86,7 +86,7 @@ function codeinfo(func, argtypes::Array)
     for (i, vt) in enumerate(cinfo.ssavaluetypes)
         if isa(vt, Union)  
             cinfo.ssavaluetypes[i] = Tuple{getfield(vt, 2).parameters...}
-        elseif isa(vt, Compiler.Const)
+        elseif isa(vt, Const)
             cinfo.ssavaluetypes[i] = typeof(vt.val)
         elseif isa(vt, PartialStruct)
             cinfo.ssavaluetypes[i] = getfield(vt, 1)

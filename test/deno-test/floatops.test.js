@@ -35,7 +35,7 @@ Deno.test("mul", () => {
 });
 
 Deno.test("div", () => {
-  const r = wasm.div(a, b);
+  const r = wasm._div(a, b);
   const gold = 0.75;
   assertEquals(r, gold);
 });

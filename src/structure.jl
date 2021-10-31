@@ -16,7 +16,7 @@ webassemblytext = translate(structure(code_typed(somejuliafunction))
 """
 structure(items::Array) = structure.(items)
 structure(item) = item
-structure(item::Core.Const) = item.val
+structure(item::Const) = item.val
 function structure(item::Expr)
     if item.head == :(call)
         head = item.args[1]

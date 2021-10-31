@@ -1,4 +1,5 @@
-(module(memory (import "imports" "memory") 1)
+(module
+(memory (import "imports" "memory") 1)
 
 (func $console_log (import "imports" "console_log") (param $ptr i32))
 (func $console_warn (import "imports" "console_warn") (param $ptr i32))
@@ -13,7 +14,7 @@
 ( call $add (local.get $a) (local.get $b) )
 ( call $sub (local.get $a) (local.get $b) )
 ( call $mul (local.get $a) (local.get $b) )
-( call $div (local.get $a) (local.get $b) )
+( call $_div (local.get $a) (local.get $b) )
 ( call $eq (local.get $a) (local.get $b) )
 ( call $ne (local.get $a) (local.get $b) )
 ( call $lt (local.get $a) (local.get $b) )
@@ -51,14 +52,14 @@ return)
 (func $_Int (export "_Int") (param $a f32) (result i32)
 ( return ( i32.trunc_f32_s (local.get $a) ) ))
 
+(func $_div (export "_div") (param $a f32) (param $b f32) (result f32)
+( return ( f32.div (local.get $a) (local.get $b) ) ))
+
 (func $gt (export "gt") (param $a f32) (param $b f32) (result i32)
 ( return ( f32.gt (local.get $a) (local.get $b) ) ))
 
 (func $sub (export "sub") (param $a f32) (param $b f32) (result f32)
 ( return ( f32.sub (local.get $a) (local.get $b) ) ))
-
-(func $div (export "div") (param $a f32) (param $b f32) (result f32)
-( return ( f32.div (local.get $a) (local.get $b) ) ))
 
 (func $_float (export "_float") (param $c i32) (result f32)
 ( return ( f32.convert_i32_s (local.get $c) ) ))

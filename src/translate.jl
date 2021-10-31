@@ -1,68 +1,4 @@
-"""
-    declaration(cinfo, func, argtypes, Rtype)
 
-Get a wat string with function declaration.
-"""
-function declaration(cinfo, func, argtypes, Rtype)
-    Nparams = length(argtypes)
-    slotnames = cinfo.slotnames[2:end]
-    slottypes = cinfo.slottypes[2:end]
-    slottypes = get_slottypes(slottypes)
-
-    decl = ["func \$$func (export \"$func\")"]
-    locals = []
-    for i = 1:length(slotnames)
-        if i <= Nparams
-            push!(decl, "(param \$$(slotnames[i]) $(slottypes[i]))")
-        else
-            push!(locals, "(local \$$(slotnames[i]) $(slottypes[i]))")
-        end
-    end
-
-    ret = [] 
-    if length(Rtype.parameters) > 0
-        #isarray = Rtype == Array{Float64,1}
-        isarray = Rtype <: Array
-        if isarray
-            push!(ret, "(result i32)")
-        else
-            # DataType Tuple
-            for rtype in Rtype.parameters
-                if !(rtype <: Nothing)
-                    rt = rtype <: AbstractFloat ? "f32" : "i32"
-                    push!(ret, "(result $rt)")
-                end
-            end
-        end
-    else
-        # DataType 
-        if !(Rtype <: Nothing)
-            rt = Rtype <: AbstractFloat ? "f32" : "i32"
-            push!(ret, "(result $rt)")
-        end
-    end
-    
-    if length(locals)>0
-        return join([decl; ret; "\n"; locals], " ")
-    else
-        return join([decl; ret], " ")
-    end 
-end
-
-function get_slottypes(slottypes)
-    st = []
-    for slottype in slottypes
-        if slottype <: AbstractFloat
-            push!(st, "f32")
-        elseif length(slottype.parameters) > 1 && istuple(slottype)
-            t = slottype.parameters[1] <: AbstractFloat ? "f32" : "i32"
-            push!(st, t)
-        else
-            push!(st, "i32")
-        end
-    end
-    return st
-end
 
 """
     translate(i::Integer, cinfo::CodeInfo, item)
@@ -77,16 +13,11 @@ translate(i::Integer, ci::CodeInfo, item::Bool) = item ? "(i32.const 1)" : "(i32
 translate(i::Integer, ci::CodeInfo, item::SlotNumber) = "(local.get \$$(ci.slotnames[item.id]))"
 translate(i::Integer ,ci::CodeInfo, item::GlobalRef) = "call \$$(item.name)"
 translate(i::Integer ,ci::CodeInfo, item::NewvarNode) = nothing
-translate(i::Integer, ci::CodeInfo, item::Compiler.Const) = translate(i, ci, item.val)
-function translate(i::Integer, ci::CodeInfo, item::Core.ReturnNode)
-    a = translate(i, ci, item.val)
-    println("TRANSLATE a Core.ReturnNode, a: ",a)
-    
-    return "return $(translate(i, ci, item.val))"
-end
+translate(i::Integer, ci::CodeInfo, item::Const) = translate(i, ci, item.val)
+translate(i::Integer, ci::CodeInfo, item::ReturnNode) = "return $(translate(i, ci, item.val))"
 
 function translate(i::Integer, ci::CodeInfo, item::TypedSlot)
-    if isa(item.typ, Compiler.Const)
+    if isa(item.typ, Const)
         return translate(i, ci, item.typ.val[1])
     else
         return item

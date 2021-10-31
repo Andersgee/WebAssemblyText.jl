@@ -9,7 +9,7 @@ itemtype(ci::CodeInfo, item::Number) = typeof(item)
 itemtype(ci::CodeInfo, item::SlotNumber) = ci.slottypes[item.id]
 itemtype(ci::CodeInfo, item::SSAValue) = ci.ssavaluetypes[item.id]
 itemtype(ci::CodeInfo, item::TypedSlot) = itemtype(ci, SlotNumber(item.id))
-itemtype(ci::CodeInfo, item::Compiler.Const) = itemtype(ci, item.val)
+itemtype(ci::CodeInfo, item::Const) = itemtype(ci, item.val)
 
 hasitemtype(ci::CodeInfo, item, type::DataType) = itemtype(ci, item) <: type
 hasitemtype(ci::CodeInfo, item, types::Array{DataType,1}) = any([itemtype(ci, item) <: type for type in types])

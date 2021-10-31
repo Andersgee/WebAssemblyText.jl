@@ -31,7 +31,7 @@
 add(a, b) = a + b
 sub(a, b) = a - b
 mul(a, b) = a * b
-div(a, b) = a / b
+_div(a, b) = a / b
 eq(a, b) = a == b
 ne(a, b) = a != b
 lt(a, b) = a < b
@@ -55,7 +55,7 @@ function ops(a, b)
   add(a, b)
   sub(a, b)
   mul(a, b)
-  div(a, b)
+  _div(a, b)
   eq(a, b)
   ne(a, b)
   lt(a, b)
