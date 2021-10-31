@@ -78,3 +78,4 @@ jobs:
           url: "https://slack-andybot.herokuapp.com/webassemblytext-action"
           method: "POST"
           data: '{"supersafepassword":"abcda","commitmessage":"${{ github.event.head_commit.message }}"}'
+          timeout: "10000"
