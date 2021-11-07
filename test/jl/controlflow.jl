@@ -105,6 +105,14 @@ function _ifblock_withreturn(x,y)
   end
 end
 
+function _booleanif(b)
+  if (b)
+    return 2
+  else
+    return 4
+  end
+end
+
 _ternary(x,y) = x < y ? 0 : 1
 _multiternary(x,y) = x < y ? 1 : x > y ? -1 : 0
 
@@ -123,18 +131,69 @@ function _error(n)
   if n < 3
     error("This is a message visible as console.error(), followed by uncreachable (trap) in wasm execution.")
   else
-    return 1
+    return 1.5
   end
-  return 2
 end
 
-#=
+
 function fact(n)
   n >= 0 || error("n must be non-negative")
   n == 0 && return 1
-  n * fact(n-1)
+  n * fact(n-1) #recursion
+end
+
+#=
+#wasm cant have Union types 
+function _unstablereturntype(x)
+  x > 0 && return 1
+  return 2.3
 end
 =#
+
+t(x) = x>0 ? true : false
+f(x) = x>0 ? false : true
+
+function shortcircuitevaluation(a,b)
+  #https://docs.julialang.org/en/v1/manual/control-flow/#Short-Circuit-Evaluation
+  r1 = t(a) && f(b) #false
+  r2 = f(a) && t(b) #false
+  r3 = f(a) && f(b) #false
+  r4 = t(a) || t(b) #true
+  r5 = t(a) || f(b) #true
+  r6 = f(a) || t(b) #true
+  r7 = f(a) || f(b) #false
+ 
+  if !r1 && !r2 && !r3 && r4 && r5 && r6 && !r7
+    #expected.
+    return 7
+  else
+    return 9
+  end
+end
+
+function shortcircuitevaluation_constant(a,b)
+  r1 = t(1) && f(2) #false, always, meaning r1 is actually a constant
+  r2 = f(a) && t(b) #false
+ 
+  if !r1 && !r2
+    #expected.
+    return 7
+  else
+    return 9
+  end
+end
+
+
+function _unstablevariabletype()
+  x = 1
+  x = 1.2
+  return x
+end
+
+function _unstablevariabletype2()
+  x = 2 * 2.3
+  return x*4.1
+end
 
 function exports()
   
@@ -158,6 +217,19 @@ function exports()
 
   k = _println(5)
   k = _error(4)
+
+  fact(5)
+  #_unstablereturntype(0) #float
+  #_unstablereturntype(1) #int
+
+  #_unstablevariabletype()
+  #_unstablevariabletype2()
+  shortcircuitevaluation(1,2)
+  shortcircuitevaluation_constant(1,2)
+
+  _booleanif(true)
+  
+
 end
 
 exports()

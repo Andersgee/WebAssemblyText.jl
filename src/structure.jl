@@ -16,7 +16,7 @@ webassemblytext = translate(structure(code_typed(somejuliafunction))
 """
 structure(items::Array) = structure.(items)
 structure(item) = item
-structure(item::Const) = item.val
+structure(item::Const) = structure(item.val) #item.val can be anything, including another Expr, so convert that aswell
 function structure(item::Expr)
     if item.head == :(call)
         head = item.args[1]
@@ -53,11 +53,18 @@ for example, rewriting expressions like this:
 - [ifselse, cond, a, b] => [select, a, b, cond]
 """
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item) = item
+
+#=
+function restructure(ci::CodeInfo, i::Integer, ssa::Array, item)
+    #use this function to find potential stuff that needs specialized restructuring
+    println("restructure, default item: ",item)
+    println("restructure, default typeof(item): ",typeof(item))
+    return item
+end
+=#
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item::GotoNode) = Any[Expr(:(goto), item.label)]
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item::GotoIfNot) = [Expr(:(gotoif), item.dest), ["i32.eqz"; item.cond]]
 restructure(ci::CodeInfo, i::Integer, ssa::Array, item::ReturnNode) = Any[Symbol("return"), item.val]
-
-
 
 function restructure(ci::CodeInfo, i::Integer, ssa::Array, items::Array)
     if length(items) > 3 && hasname(items[1], keys(floatops))
@@ -78,7 +85,7 @@ function restructure(ci::CodeInfo, i::Integer, ssa::Array, items::Array)
         elseif isa(items[2], SSAValue)
             if isa(ssa[items[2].id], Array)
                 # getfield refers to some expression, Julia seems to handle this by a some macro that.. does something
-                error("getfield with expression as target, unsure what to return. If tuple assigment like a,b = myfunc(). Solve by doing ab = myfunc() followed by getfield(ab,1) or getfield(ab,2) when needed. getfield is completely cost free.")
+                error("getfield with expression as target, unsure what to return. If tuple assigment like a,b = myfunc(). Solve by doing ab = myfunc() followed by ab[1] or ab[2] when needed. getfield is completely cost free.")
                 return ssa[items[2].id][2]
             else
                 # getfield refers to an iterator tuple

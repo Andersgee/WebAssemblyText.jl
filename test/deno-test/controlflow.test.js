@@ -145,7 +145,7 @@ Deno.test("multiternary", () => {
 
 Deno.test("error (without error)", () => {
   const r = wasm._error(4);
-  const gold = 1;
+  const gold = 1.5;
   assertEquals(r, gold);
 });
 
@@ -157,4 +157,56 @@ Deno.test("error (with Error: uncreachable)", () => {
     Error,
     "unreachable"
   );
+});
+
+Deno.test("recursion", () => {
+  const r = wasm.fact(6);
+  const gold = 720;
+  assertEquals(r, gold);
+});
+
+Deno.test("recursion (with Error)", () => {
+  assertThrows(
+    () => {
+      const r = wasm.fact(-1);
+    },
+    Error,
+    "unreachable"
+  );
+});
+
+/*
+Deno.test("unstable variabletype", () => {
+  const r = wasm._unstablevariabletype(6);
+  const gold = 1.2000000476837158;
+  assertEquals(r, gold);
+});
+
+Deno.test("unstable variabletype2", () => {
+  const r = wasm._unstablevariabletype2(6);
+  const gold = 18.85999870300293;
+  assertEquals(r, gold);
+});
+*/
+
+Deno.test("boolean if", () => {
+  const r = wasm._booleanif(true);
+  const gold = 2;
+  assertEquals(r, gold);
+
+  const r2 = wasm._booleanif(false);
+  const gold2 = 4;
+  assertEquals(r2, gold2);
+});
+
+Deno.test("shortcircuitevaluation", () => {
+  const r = wasm.shortcircuitevaluation(1, 2);
+  const gold = 7;
+  assertEquals(r, gold);
+});
+
+Deno.test("shortcircuitevaluation with evaluated to constant", () => {
+  const r = wasm.shortcircuitevaluation_constant(1, 2);
+  const gold = 7;
+  assertEquals(r, gold);
 });

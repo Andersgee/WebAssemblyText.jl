@@ -72,7 +72,7 @@
 (func $tuplecall (export "tuplecall") (param $x f32) (result f32) 
  (local $r f32) (local $ab f32) (local $ab2 f32)
 ( local.set $ab (local.set $ab2 ( call $tuplereturn (local.get $x) ) ) )
-( local.set $r (local.get $ab) )
+( local.set $r  (local.get $ab)  )
 ( return (local.get $r) ))
 
 (func $add_ (export "add_") (param $r i32) (param $a i32) (param $b i32) (result i32) 

@@ -16,6 +16,40 @@
 ( return (i32.const 0) )
 ) ( return (i32.const 1) ))
 
+(func $fact (export "fact") (param $n i32) (result i32)
+(block (block ( br_if 0 ( i32.eqz ( i32.ge_s (local.get $n) (i32.const 0) ) ) )
+(br 1)
+) (call $setsize_tmp (i32.const 22) (i32.const 1))
+(call $setlinearindex_int_tmp (i32.const 110) (i32.const 1)) ;;n
+(call $setlinearindex_int_tmp (i32.const 32) (i32.const 2)) ;; 
+(call $setlinearindex_int_tmp (i32.const 109) (i32.const 3)) ;;m
+(call $setlinearindex_int_tmp (i32.const 117) (i32.const 4)) ;;u
+(call $setlinearindex_int_tmp (i32.const 115) (i32.const 5)) ;;s
+(call $setlinearindex_int_tmp (i32.const 116) (i32.const 6)) ;;t
+(call $setlinearindex_int_tmp (i32.const 32) (i32.const 7)) ;; 
+(call $setlinearindex_int_tmp (i32.const 98) (i32.const 8)) ;;b
+(call $setlinearindex_int_tmp (i32.const 101) (i32.const 9)) ;;e
+(call $setlinearindex_int_tmp (i32.const 32) (i32.const 10)) ;; 
+(call $setlinearindex_int_tmp (i32.const 110) (i32.const 11)) ;;n
+(call $setlinearindex_int_tmp (i32.const 111) (i32.const 12)) ;;o
+(call $setlinearindex_int_tmp (i32.const 110) (i32.const 13)) ;;n
+(call $setlinearindex_int_tmp (i32.const 45) (i32.const 14)) ;;-
+(call $setlinearindex_int_tmp (i32.const 110) (i32.const 15)) ;;n
+(call $setlinearindex_int_tmp (i32.const 101) (i32.const 16)) ;;e
+(call $setlinearindex_int_tmp (i32.const 103) (i32.const 17)) ;;g
+(call $setlinearindex_int_tmp (i32.const 97) (i32.const 18)) ;;a
+(call $setlinearindex_int_tmp (i32.const 116) (i32.const 19)) ;;t
+(call $setlinearindex_int_tmp (i32.const 105) (i32.const 20)) ;;i
+(call $setlinearindex_int_tmp (i32.const 118) (i32.const 21)) ;;v
+(call $setlinearindex_int_tmp (i32.const 101) (i32.const 22)) ;;e
+(call $console_error (i32.const 4))
+(unreachable)
+)
+(block ( br_if 0 ( i32.eqz ( i32.eq (local.get $n) (i32.const 0) ) ) )
+( return (i32.const 1) )
+)
+( return ( i32.mul (local.get $n) ( call $fact ( i32.sub (local.get $n) (i32.const 1) ) ) ) ))
+
 (func $_nestedloop1 (export "_nestedloop1") (result f32) 
  (local $_2 i32) (local $s f32) (local $_4 i32) (local $i i32) (local $j i32) (local $_2i i32) (local $_4i i32)
 ( local.set $s (f32.const 0.0) )
@@ -90,9 +124,9 @@
 ) ( return (i32.const 1) )
 ) ( return (i32.const 2) ))
 
-(func $_error (export "_error") (param $n i32) (result i32)
-(block (block ( br_if 0 ( i32.eqz ( i32.lt_s (local.get $n) (i32.const 3) ) ) )
-(call $setsize_tmp (i32.const 96) (i32.const 1))
+(func $_error (export "_error") (param $n i32) (result f32)
+(block ( br_if 0 ( i32.eqz ( i32.lt_s (local.get $n) (i32.const 3) ) ) )
+( return (call $setsize_tmp (i32.const 96) (i32.const 1))
 (call $setlinearindex_int_tmp (i32.const 84) (i32.const 1)) ;;T
 (call $setlinearindex_int_tmp (i32.const 104) (i32.const 2)) ;;h
 (call $setlinearindex_int_tmp (i32.const 105) (i32.const 3)) ;;i
@@ -190,10 +224,8 @@
 (call $setlinearindex_int_tmp (i32.const 110) (i32.const 95)) ;;n
 (call $setlinearindex_int_tmp (i32.const 46) (i32.const 96)) ;;.
 (call $console_error (i32.const 4))
-(unreachable)
-(br 1)
-) ( return (i32.const 1) )
-) ( return (i32.const 2) ))
+(unreachable) )
+) ( return (f32.const 1.5) ))
 
 (func $_ifelse (export "_ifelse") (param $n i32) (result i32)
 ( return ( select (local.get $n) (i32.const 7) ( i32.gt_s (local.get $n) (i32.const 3) ) ) ))
@@ -205,6 +237,53 @@
 (block ( br_if 0 ( i32.eqz ( i32.gt_s (local.get $x) (local.get $y) ) ) )
 ( return (i32.const -1) )
 ) ( return (i32.const 0) ))
+
+(func $shortcircuitevaluation (export "shortcircuitevaluation") (param $a i32) (param $b i32) (result i32) 
+ (local $r7 i32) (local $r6 i32) (local $r5 i32) (local $r4 i32) (local $r3 i32) (local $r2 i32) (local $r1 i32) (local $_11 i32) (local $_12 i32) (local $_13 i32) (local $_14 i32) (local $_15 i32) (local $_16 i32) (local $_17 i32)
+(block (block ( br_if 0 ( i32.eqz ( call $t (local.get $a) ) ) )
+( local.set $_11  ( call $f (local.get $b) )  )
+(br 1)
+) ( local.set $_11 (i32.const 0) )
+) ( local.set $r1 (local.get $_11) )
+(block (block ( br_if 0 ( i32.eqz ( call $f (local.get $a) ) ) )
+( local.set $_12  ( call $t (local.get $b) )  )
+(br 1)
+) ( local.set $_12 (i32.const 0) )
+) ( local.set $r2 (local.get $_12) )
+(block (block ( br_if 0 ( i32.eqz ( call $f (local.get $a) ) ) )
+( local.set $_13  ( call $f (local.get $b) )  )
+(br 1)
+) ( local.set $_13 (i32.const 0) )
+) ( local.set $r3 (local.get $_13) )
+(block (block ( br_if 0 ( i32.eqz ( call $t (local.get $a) ) ) )
+( local.set $_14  ( call $t (local.get $a) )  )
+(br 1)
+) ( local.set $_14  ( call $t (local.get $b) )  )
+) ( local.set $r4 (local.get $_14) )
+(block (block ( br_if 0 ( i32.eqz ( call $t (local.get $a) ) ) )
+( local.set $_15  ( call $t (local.get $a) )  )
+(br 1)
+) ( local.set $_15  ( call $f (local.get $b) )  )
+) ( local.set $r5 (local.get $_15) )
+(block (block ( br_if 0 ( i32.eqz ( call $f (local.get $a) ) ) )
+( local.set $_16  ( call $f (local.get $a) )  )
+(br 1)
+) ( local.set $_16  ( call $t (local.get $b) )  )
+) ( local.set $r6 (local.get $_16) )
+(block (block ( br_if 0 ( i32.eqz ( call $f (local.get $a) ) ) )
+( local.set $_17  ( call $f (local.get $a) )  )
+(br 1)
+) ( local.set $_17  ( call $f (local.get $b) )  )
+) ( local.set $r7 (local.get $_17) )
+(block ( br_if 0 ( i32.eqz ( i32.eqz (local.get $r1) ) ) )
+( br_if 0 ( i32.eqz ( i32.eqz (local.get $r2) ) ) )
+( br_if 0 ( i32.eqz ( i32.eqz (local.get $r3) ) ) )
+( br_if 0 ( i32.eqz (local.get $r4) ) )
+( br_if 0 ( i32.eqz (local.get $r5) ) )
+( br_if 0 ( i32.eqz (local.get $r6) ) )
+( br_if 0 ( i32.eqz ( i32.eqz (local.get $r7) ) ) )
+( return (i32.const 7) )
+) ( return (i32.const 9) ))
 
 (func $_continue1 (export "_continue1") (result f32) 
  (local $_2 i32) (local $s f32) (local $i i32) (local $_2i i32)
@@ -273,6 +352,28 @@
 ( return (i32.const 9) )
 ) ( return (local.get $k) ))
 
+(func $f (export "f") (param $x i32) (result i32)
+(block ( br_if 0 ( i32.eqz ( i32.gt_s (local.get $x) (i32.const 0) ) ) )
+( return (i32.const 0) )
+) ( return (i32.const 1) ))
+
+(func $shortcircuitevaluation_constant (export "shortcircuitevaluation_constant") (param $a i32) (param $b i32) (result i32) 
+ (local $r2 i32) (local $r1 i32) (local $_6 i32) (local $_7 i32)
+( call $t (i32.const 1) )
+( local.set $_6  ( call $f (i32.const 2) )  )
+(block (br 0)
+( local.set $_6 (i32.const 0) )
+) ( local.set $r1 (i32.const 0) )
+(block (block ( br_if 0 ( i32.eqz ( call $f (local.get $a) ) ) )
+( local.set $_7  ( call $t (local.get $b) )  )
+(br 1)
+) ( local.set $_7 (i32.const 0) )
+) ( local.set $r2 (local.get $_7) )
+(block ( br_if 0 ( i32.eqz ( i32.eqz (i32.const 0) ) ) )
+( br_if 0 ( i32.eqz ( i32.eqz (local.get $r2) ) ) )
+( return (i32.const 7) )
+) ( return (i32.const 9) ))
+
 (func $_nestedloopwithinnercontinue1 (export "_nestedloopwithinnercontinue1") (result f32) 
  (local $_2 i32) (local $s f32) (local $_4 i32) (local $i i32) (local $j i32) (local $_2i i32) (local $_4i i32)
 ( local.set $s (f32.const 0.0) )
@@ -297,6 +398,16 @@
 ( br_if 1 ( i32.eqz ( i32.eqz ( i32.eqz (local.get $_2i) ) ) ) )
 (br 0)
 ) ) ( return (local.get $s) ))
+
+(func $_booleanif (export "_booleanif") (param $b i32) (result i32)
+(block ( br_if 0 ( i32.eqz (local.get $b) ) )
+( return (i32.const 2) )
+) ( return (i32.const 4) ))
+
+(func $t (export "t") (param $x i32) (result i32)
+(block ( br_if 0 ( i32.eqz ( i32.gt_s (local.get $x) (i32.const 0) ) ) )
+( return (i32.const 1) )
+) ( return (i32.const 0) ))
 
 (func $_if1 (export "_if1") (param $n i32) (result i32)
 (block ( br_if 0 ( i32.eqz ( i32.gt_s (local.get $n) (i32.const 3) ) ) )

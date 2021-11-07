@@ -8,16 +8,31 @@ Get a wat string from item, specialized on item type.
 translate(i::Integer, ci::CodeInfo, item) = item
 translate(i::Integer, ci::CodeInfo, item::AbstractFloat) = "(f32.const $item)"
 translate(i::Integer, ci::CodeInfo, item::Number) = "(i32.const $item)"
-# translate(i::Integer, ci::CodeInfo, item::Nothing) = "(i32.const 0)"
 translate(i::Integer, ci::CodeInfo, item::Bool) = item ? "(i32.const 1)" : "(i32.const 0)"
+#=
+function translate(i::Integer, ci::CodeInfo, item::Number, slottype=Integer)
+    if ci.ssavaluetypes[i] <: AbstractFloat
+        return "(f32.const $item)"
+    else
+        return slottype <: Integer ? "(i32.const $item)" : "(f32.const $item)"
+    end
+end
+translate(i::Integer, ci::CodeInfo, item::Bool, slottype=Bool) = item ? "(i32.const 1)" : "(i32.const 0)"
+
+=#
+# translate(i::Integer, ci::CodeInfo, item::Nothing) = "(i32.const 0)"
+
 translate(i::Integer, ci::CodeInfo, item::SlotNumber) = "(local.get \$$(ci.slotnames[item.id]))"
 translate(i::Integer ,ci::CodeInfo, item::GlobalRef) = "call \$$(item.name)"
 translate(i::Integer ,ci::CodeInfo, item::NewvarNode) = nothing
 translate(i::Integer, ci::CodeInfo, item::Const) = translate(i, ci, item.val)
 translate(i::Integer, ci::CodeInfo, item::ReturnNode) = "return $(translate(i, ci, item.val))"
 
+
 function translate(i::Integer, ci::CodeInfo, item::TypedSlot)
+    #println("translate TypedSlot, item:",item)
     if isa(item.typ, Const)
+        #println("translate TypedSlot, item.typ:",item.typ)
         return translate(i, ci, item.typ.val[1])
     else
         return item
@@ -104,13 +119,13 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
     
     elseif hasname(items[1], :(=))
         slotname = ci.slotnames[items[2].id]
+        slottype = ci.slottypes[items[2].id]
         if isa(items[3], Array) && is_iterate(items[3][1])
             return ["local.set \$$(slotname) ( local.set \$$(slotname)i", translate(i, ci, items[3]), ")"]
-        elseif isa(items[3], Array) && istuple(ci.slottypes[items[2].id])
-            params = ci.slottypes[items[2].id].parameters
+        elseif isa(items[3], Array) && istuple(slottype)
             settuples = []
             closetuples = []
-            for n = 2:length(params)
+            for n = 2:length(slottype.parameters)
                 push!(settuples,"(local.set \$$(slotname)$(n)")
                 push!(closetuples, ")")
             end
@@ -118,7 +133,12 @@ function translate(i::Integer, ci::CodeInfo, items::Array)
             closetuples = spacedjoin(closetuples)
             return ["local.set \$$(slotname)",settuples, translate(i, ci, items[3]), closetuples]
         else
-            return ["local.set \$$(slotname)", translate(i, ci, items[3])]
+            #here maybe check for the type of the slotname, if its float then use f32 inside translate?
+            #if (typeof(items[3]) <: Number)
+            #    return ["local.set \$$(slotname)", translate(i, ci, items[3], slottype)]
+            #else 
+                return ["local.set \$$(slotname)", translate(i, ci, items[3])]
+            #end
         end
     elseif hasname(items[1], :(println))
         if itemtype(ci, items[2]) <: String

@@ -113,8 +113,8 @@ function process(func, funcs, argtypes, imports; debuginfo::Bool=false)
     ssa = [restructure(cinfo, i, ssa, ssa[i]) for i = 1:length(ssa)]
     binfo = blockinfo(ssa)
     
-    debuginfo && println("---------- $func (after restructure) ----------")
-    debuginfo && debugprint(ssa, cinfo, binfo, Rtype)
+    printstyled("---------- $func (after restructure) ----------\n"; color=:yellow)
+    debugprint(ssa, cinfo, binfo, Rtype)
     
     argtypes!(cinfo, argtypes, funcs, ssa)
     imports!(imports, cinfo, funcs, builtinfuncs, ssa)

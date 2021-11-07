@@ -50,20 +50,51 @@ blockfuncexpressions(block) = [ex.args[2] for ex in block if isfunction(ex)]
 Essentially code_typed() with optimize=false
 
 # Details: 
-Not optimizing gives a much simpler ast without phinodes and boundchecks.
+Not optimizing gives a much simpler AST (without phinodes and boundchecks).
 """
 function codeinfo(func, argtypes::Array)
     ct = code_typed(Base.eval(Evalscope, func), Tuple{argtypes...}; optimize=false, debuginfo=:none)[1] # none, source
     cinfo = ct[1]
     Rtype = ct[2]
 
+    #cinfo.slottypes has type Any...
+
+    if (isa(Rtype, Union))
+        error("The function $(string(func)) has unstable return type. Rtype: $Rtype")
+        #Rtype = getfield(Rtype,2)
+        #println("Using one of them for now... Rtype is now $Rtype")
+    end
+ 
     for (i, st) in enumerate(cinfo.slottypes)
-        if isa(st, Union) 
-            # iterator variables are union of [nothing, [value,index]]
-            # getfield(st,2) gets the [value,index] tuple
-            cinfo.slottypes[i] = getfield(st, 2).parameters[1]
-            push!(cinfo.slotnames, Symbol("_$(i)i"))
-            push!(cinfo.slottypes, getfield(st, 2).parameters[2])
+        if isa(st, Union)
+            types = Base.uniontypes(st) #this is how to get an array of the types. types[2] might be another Union...
+            println("uniontypes: ",types)
+            if length(types)==2 && types[1] <: Nothing && types[2] <: Tuple{Any, Integer}
+                # iterator variables are union of [nothing, [value,index]]
+                # types[2] is the [value,index] tuple
+
+                # ignore the nothing field
+                # change type of original to the "value" type
+                cinfo.slottypes[i] = types[2].parameters[1]
+                # and add an extra "index" slot
+                push!(cinfo.slotnames, Symbol("_$(i)i"))   
+                push!(cinfo.slottypes, types[2].parameters[2])
+            else
+                #this most likely refers to a variable with an unstable type
+                canUseFloat = all(types .<: Number)
+                if (canUseFloat)
+                    cinfo.slottypes[i] = Float64
+                end
+                #=
+                name = cinfo.slotnames[i]
+                cinfo.slottypes[i] = types[1]
+                #do I even need to add the extra types?
+                for j=2:length(types)
+                    push!(cinfo.slotnames, Symbol("_$(name)$(j)"))
+                    push!(cinfo.slottypes, types[j])
+                end
+                =#
+            end
         elseif !isa(st, Const) && length(st.parameters) > 1 && istuple(st)
             # wasm can now return multiple values, but tuples dont exist
             # so create individual variables representing the tuple parameters 
@@ -94,5 +125,8 @@ function codeinfo(func, argtypes::Array)
     end
     return cinfo, Rtype
 end
+
+# iterator variables are union of [nothing, [value,index]]
+isiteratorvariable(st) = isa(st, Union) && getfield(st,1) == Nothing && typeof(getfield(st,2)) == DataType
 
 istuple(slottype) = all([typeof(p) <: DataType for p in slottype.parameters])

@@ -27,7 +27,8 @@ end
 
 function tuplecall(x)
   ab = tuplereturn(x)
-  r = getfield(ab,1)
+  r = ab[1]
+  #r = getfield(ab,1)
   return r
 end
 
